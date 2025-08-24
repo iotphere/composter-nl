@@ -163,8 +163,8 @@
             "timers": {
                 "fan_pwm": {
                     "form": "pwm",
-                    "t_duty": 2,
-                    "t_cycle": 3,
+                    "t_duty": 10,
+                    "t_cycle": 45,
                     "unit": "min",
                     "pass": {
                         "1": {
@@ -187,8 +187,8 @@
                 },
                 "water_pump_pwm": {
                     "form": "pwm",
-                    "t_duty": 2,
-                    "t_cycle": 3,
+                    "t_duty": 5,
+                    "t_cycle": 60,
                     "unit": "min",
                     "pass": {
                         "1": {
@@ -395,7 +395,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "light": {
                 "val": "off"
@@ -423,7 +423,7 @@
             },
             "discharger": {
                 "speed": {
-                    "set_point": 100
+                    "set_point": 51
                 },
                 "val": "off"
             },

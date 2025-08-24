@@ -423,7 +423,7 @@
             },
             "discharger": {
                 "speed": {
-                    "set_point": 51
+                    "set_point": 100
                 },
                 "val": "off"
             },

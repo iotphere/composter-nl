@@ -164,7 +164,7 @@
                 "fan_pwm": {
                     "form": "pwm",
                     "t_duty": 10,
-                    "t_cycle": 45,
+                    "t_cycle": 180,
                     "unit": "min",
                     "pass": {
                         "1": {
@@ -188,7 +188,7 @@
                 "water_pump_pwm": {
                     "form": "pwm",
                     "t_duty": 5,
-                    "t_cycle": 60,
+                    "t_cycle": 360,
                     "unit": "min",
                     "pass": {
                         "1": {

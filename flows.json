@@ -514,14 +514,16 @@
         "y": 440,
         "wires": [
             [
-                "22442867c06e05b8"
+                "22442867c06e05b8",
+                "3bb33e35ca7ba828"
             ],
             [
-                "69b69a40e08aa884"
+                "69b69a40e08aa884",
+                "adaa33d4b02ad602"
             ],
             [
                 "0b3654ab51cfd27c",
-                "3bb33e35ca7ba828"
+                "5e13013435e3a5ac"
             ]
         ]
     },
@@ -589,8 +591,7 @@
         "y": 60,
         "wires": [
             [
-                "b7b87a40dd91a021",
-                "109faf048fe0b87d"
+                "b7b87a40dd91a021"
             ],
             [
                 "22442867c06e05b8"
@@ -1058,7 +1059,7 @@
         "wires": [
             [
                 "8701a07643f54a7b",
-                "085e9b437f1d602e"
+                "a150fa8b3d74e98b"
             ]
         ]
     },
@@ -1066,48 +1067,17 @@
         "id": "3bb33e35ca7ba828",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "debug 1",
+        "name": "port 1",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 900,
-        "y": 360,
-        "wires": []
-    },
-    {
-        "id": "109faf048fe0b87d",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1200,
-        "y": 140,
-        "wires": []
-    },
-    {
-        "id": "085e9b437f1d602e",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 820,
-        "y": 500,
+        "x": 990,
+        "y": 660,
         "wires": []
     },
     {
@@ -1209,5 +1179,56 @@
                 "8701a07643f54a7b"
             ]
         ]
+    },
+    {
+        "id": "adaa33d4b02ad602",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "port 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 990,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "5e13013435e3a5ac",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "port 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 990,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "a150fa8b3d74e98b",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "telemetry_periodical_cmd_on",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 800,
+        "wires": []
     }
 ]

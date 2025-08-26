@@ -40,8 +40,8 @@
         },
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1756208804766,
-            "next_time": 1756209164780
+            "on_time": 1756209450454,
+            "next_time": 1756209690463
         }
     }
 }

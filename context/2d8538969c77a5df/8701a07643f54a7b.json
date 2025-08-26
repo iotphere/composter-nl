@@ -19,16 +19,16 @@
             "next_time": 1756289168371
         },
         "light_pulse": {
-            "state": "off",
+            "state": "on",
             "done": true,
-            "on_time": 1756208775839,
-            "phase_until": 1756208777839
+            "on_time": 1756210692045,
+            "phase_until": 1756210694045
         },
         "light_pwm": {
             "state": "off",
             "phase": null,
-            "on_time": 1756208767493,
-            "phase_until": 1756208794766
+            "on_time": 1756210702301,
+            "phase_until": 1756210729028
         },
         "buzzer_pulse": {
             "state": "off",
@@ -40,8 +40,8 @@
         },
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1756209450454,
-            "next_time": 1756209690463
+            "on_time": 1756211082261,
+            "next_time": 1756212762374
         }
     }
 }

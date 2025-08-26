@@ -187,7 +187,7 @@
                 },
                 "water_pump_pwm": {
                     "form": "pwm",
-                    "t_duty": 5,
+                    "t_duty": 15,
                     "t_cycle": 360,
                     "unit": "min",
                     "pass": {
@@ -235,7 +235,7 @@
                 "light_pwm": {
                     "form": "pwm",
                     "t_duty": 2,
-                    "t_cycle": 4,
+                    "t_cycle": 5,
                     "unit": "s",
                     "pass": {
                         "1": {
@@ -258,7 +258,7 @@
                 },
                 "buzzer_pulse": {
                     "form": "delay",
-                    "duration": 3,
+                    "duration": 2,
                     "unit": "s",
                     "pass": {
                         "1": {
@@ -282,7 +282,7 @@
                 "buzzer_pwm": {
                     "form": "pwm",
                     "t_duty": 2,
-                    "t_cycle": 4,
+                    "t_cycle": 5,
                     "unit": "s",
                     "pass": {
                         "1": {
@@ -342,7 +342,7 @@
                     "interval": 2,
                     "unit": "min",
                     "pass": {
-                        "4": {
+                        "1": {
                             "method": "evt",
                             "params": {
                                 "type": "telemetry_periodical",
@@ -395,7 +395,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "light": {
                 "val": "off"

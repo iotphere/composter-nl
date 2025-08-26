@@ -331,7 +331,7 @@
                             "method": "evt",
                             "params": {
                                 "type": "day",
-                                "val": 0
+                                "val": 21
                             },
                             "port": 3
                         }
@@ -419,7 +419,7 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "off"
+                "val": "forward_on"
             },
             "discharger": {
                 "speed": {
@@ -452,7 +452,7 @@
                 "val": 0
             },
             "fsm": {
-                "state": "stop"
+                "state": "start"
             }
         }
     }

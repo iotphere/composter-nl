@@ -111,16 +111,14 @@ function doAllOff() {
 
 // === Restore ===
 if (type === "restore" && target === "all") {
-  setTimeout(() => {
-    evtMsgs.push({ payload: { method: "evt", params: { type: "emergency_contactor", val: "on" } } });
-    const emRelay = getRelayInfo("emergency_contactor");
-    if (emRelay) {
-      emRelay.array[emRelay.bit] = true;
-      relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));
-    }
-    enqueueAll();
-    setTimeout(doAllOff, 10000);
-  }, 5000);
+  evtMsgs.push({ payload: { method: "evt", params: { type: "emergency_contactor", val: "on" } } });
+  const emRelay = getRelayInfo("emergency_contactor");
+  if (emRelay) {
+    emRelay.array[emRelay.bit] = true;
+    relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));
+  }
+  enqueueAll();
+  setTimeout(doAllOff, 10000);
 } else if (type === "off" && target === "all") {
   doAllOff();
 } else {

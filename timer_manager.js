@@ -185,6 +185,7 @@ if (method === "cmd") {
     }
   } else if (target === "all" && type === "off") {
     for (const [key, timer] of Object.entries(timers)) {
+      if (key === "telemetry_periodical") continue;
       if (!runtime[key]) {
         runtime[key] = {};
       }

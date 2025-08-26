@@ -419,7 +419,7 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "forward_on"
+                "val": "off"
             },
             "discharger": {
                 "speed": {
@@ -452,7 +452,7 @@
                 "val": 0
             },
             "fsm": {
-                "state": "start"
+                "state": "stop"
             }
         }
     }

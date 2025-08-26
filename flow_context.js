@@ -111,7 +111,7 @@ const flowData = {
         pass: {
           2: {method: "cmd", params: {type: "dry", target: "fsm"}, port: 1},
           3: {method: "cmd", params: {type: "end", target: "fsm"}, port: 1},
-          4: {method: "evt", params: {type: "day", val: 0}, port: 3} // val: count
+          4: {method: "evt", params: {type: "day"}, port: 3} // val buradan sabit gelmeyecek
         }             
       },
       telemetry_periodical: {

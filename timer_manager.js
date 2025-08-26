@@ -21,12 +21,10 @@ function pushMessage(timer, passKey, out, runtime = {}, target = null) {
 
   const message = RED.util.cloneMessage(entry);
   const port = (entry.port ?? 0) - 1;
-
   if (port < 0 || port > 2) return;
 
   delete message.port;
 
-  // Runtime'dan dinamik parametreleri al, val her zaman runtime[target].count olsun
   if (message.params && target && runtime[target]) {
     for (const [key, val] of Object.entries(message.params)) {
       if (val === null && runtime[target][key] !== undefined) {
@@ -38,6 +36,11 @@ function pushMessage(timer, passKey, out, runtime = {}, target = null) {
       ) {
         message.params[key].val = runtime[target].count;
       }
+    }
+
+    // day_counter özel başlangıç
+    if (timer.form === "counter" && passKey === 4 && message.params.val === undefined) {
+      message.params.val = runtime[target].count;
     }
   }
 
@@ -69,9 +72,18 @@ function timerOn(timer, rt, now, out, target) {
       break;
 
     case "counter":
+      // RESET
       rt.on_time = now;
       rt.count = timer.base;
       rt.next_time = now + toMs(timer.interval, timer.unit);
+
+      // Başlangıçta pass.4 val = base
+      const entry4 = timer.pass?.[4];
+      if (entry4) {
+        entry4.params = entry4.params || {};
+        entry4.params.val = rt.count;
+      }
+
       pushMessage(timer, 1, out, runtime, target);
       pushMessage(timer, 4, out, runtime, target);
       break;
@@ -172,14 +184,12 @@ if (method === "cmd") {
       timerOff(timers[target], runtime[target], out, target);
     }
   } else if (target === "all" && type === "off") {
-    // Tüm timer'ları kapat ve sadece 1 mesaj çıkartmak için suppressMessages=true ile timerOff çağr
     for (const [key, timer] of Object.entries(timers)) {
       if (!runtime[key]) {
         runtime[key] = {};
       }
       timerOff(timer, runtime[key], out, key, true);
     }
-    // Ardından tek bir off all mesajını gönder
     out[1].push({
       payload: {
         method: "cmd",

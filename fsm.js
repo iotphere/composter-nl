@@ -18,7 +18,7 @@ function transition(toState) {
     currentState = toState;
     flowData.runtime.fsm.state = currentState;
     flow.set("flow", flowData);
-    sendEvt(1, "fsm", { state: currentState });
+    sendEvt(2, "fsm", { state: currentState });
   }
 }
 

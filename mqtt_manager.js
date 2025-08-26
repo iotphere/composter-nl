@@ -49,23 +49,25 @@ function buildTelemetryMsg(content) {
 // 1) evt
 if (method === "evt") {
     const subType = params?.type;
+
     if (subType === "telemetry_periodical") {
         return [buildTelemetryMsg(flowData.runtime || {}), null];
-    } else {
+    } 
+    // Yeni ekleme: fsm eventi
+    else if (subType === "fsm") {
+        const formatted = { fsm: { state: params.state } };
+        return [buildTelemetryMsg(formatted), null];
+    }
+    else {
         const key = params?.type;
 
-        // Hem val hem speed varsa
         if (params?.val !== undefined && params?.speed !== undefined) {
             const formatted = { [key]: { val: params.val, speed: params.speed } };
             return [buildTelemetryMsg(formatted), null];
-        }
-        // Sadece val varsa
-        else if (params?.val !== undefined) {
+        } else if (params?.val !== undefined) {
             const formatted = { [key]: { val: params.val } };
             return [buildTelemetryMsg(formatted), null];
-        }
-        // Sadece speed varsa (garanti olsun)
-        else if (params?.speed !== undefined) {
+        } else if (params?.speed !== undefined) {
             const formatted = { [key]: { speed: params.speed } };
             return [buildTelemetryMsg(formatted), null];
         }

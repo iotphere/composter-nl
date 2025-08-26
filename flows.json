@@ -395,7 +395,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "actuators",
-        "func": "const flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst relayChannels1 = config.io.relay_outputs_1.channels || {};\nconst relayChannels2 = config.io.relay_outputs_2.channels || {};\nconst unitid1 = config.io.relay_outputs_1.unitid;\nconst unitid2 = config.io.relay_outputs_2.unitid;\n\nlet currentArray1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet currentArray2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\nfunction getRelayInfo(name) {\n  if (relayChannels1?.[name]) return { array: currentArray1, bit: relayChannels1[name].map, unitid: unitid1, arrayName: \"last_write_array_1\" };\n  if (relayChannels2?.[name]) return { array: currentArray2, bit: relayChannels2[name].map, unitid: unitid2, arrayName: \"last_write_array_2\" };\n  return null;\n}\n\nfunction createRelayMsg(array, unitid, arrayName) {\n  let word = 0;\n  for (let i = 0; i < 8; i++) {\n    if (array[i]) word |= (1 << i);\n  }\n  context.set(arrayName, array);\n  return {\n    payload: {\n      value: word,\n      fc: 6,\n      unitid,\n      address: 128,\n      quantity: 1\n    }\n  };\n}\n\nconst relayMsgs = [];\nconst sinamicsMsgs = [];\nconst evtMsgs = [];\n\n// === Toplu OFF ===\nif (type === \"off\" && target === \"all\") {\n  currentArray1 = Array(8).fill(false);\n  currentArray2 = Array(8).fill(false);\n\n  // emergency_contactor'u koru\n  const emBit = relayChannels2.emergency_contactor?.map;\n  if (emBit !== undefined) {\n    currentArray2[emBit] = runtime.emergency_contactor?.val === \"on\";\n  }\n\n  context.set(\"last_write_array_1\", currentArray1);\n  context.set(\"last_write_array_2\", currentArray2);\n\n  // runtime ve evtMsgs güncelle (emergency_contactor hariç)\n  for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {\n    if (name === \"emergency_contactor\") continue;\n    if (runtime[name]) {\n      runtime[name].val = \"off\";\n      evtMsgs.push({ payload: { method: \"evt\", params: { type: name, val: \"off\" } } });\n    }\n  }\n\n  // Sinamics OFF işlemleri\n  for (const [name, sin] of Object.entries(config.sinamics?.channels || {})) {\n    sinamicsMsgs.push({\n      payload: {\n        value: config.sinamics.command_words.off,\n        fc: 6,\n        unitid: sin.unitid,\n        address: 99,\n        quantity: 1\n      }\n    });\n    if (!runtime[name]) runtime[name] = {};\n    runtime[name].val = \"off\";\n\n    // Sinamics evt mesajını hem val hem speed ile gönder\n    evtMsgs.push({\n      payload: {\n        method: \"evt\",\n        params: {\n          type: name,\n          val: runtime[name].val,\n          speed: runtime[name].speed ? { set_point: runtime[name].speed.set_point } : undefined\n        }\n      }\n    });\n  }\n\n  // Loader OFF işlemleri\n  const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n    .filter(([_, val]) => val.group === \"loader\")\n    .map(([key]) => key);\n\n  loaderKeys.forEach(key => {\n    const r = getRelayInfo(key);\n    if (r) r.array[r.bit] = false;\n  });\n  runtime.loader = { val: \"off\" };\n  evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: \"off\" } } });\n\n  // Röle mesajlarını kuyrukla\n  relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n  relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n\n} else {\n  // Sinamics kontrolü\n  const sinamics = config.sinamics?.channels?.[target];\n  if (sinamics) {\n    const unitid = sinamics.unitid;\n    const commandWords = config.sinamics.command_words;\n    const speedMax = config.sinamics.speed_max;\n\n    if ([\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const value = commandWords[type];\n      if (value != null) {\n        sinamicsMsgs.push({\n          payload: {\n            value,\n            fc: 6,\n            unitid,\n            address: 99,\n            quantity: 1\n          }\n        });\n        if (!runtime[target]) runtime[target] = {};\n        runtime[target].val = type;\n      }\n    }\n\n    if (type === \"speed\" && typeof set_point === \"number\") {\n      const value = Math.round(set_point / 100 * speedMax);\n      sinamicsMsgs.push({\n        payload: {\n          value,\n          fc: 6,\n          unitid,\n          address: 100,\n          quantity: 1\n        }\n      });\n      if (!runtime[target]) runtime[target] = {};\n      if (!runtime[target].speed) runtime[target].speed = {};\n      runtime[target].speed.set_point = set_point;\n    }\n\n    // Sinamics evt mesajını her zaman hem val hem speed ile gönder\n    evtMsgs.push({\n      payload: {\n        method: \"evt\",\n        params: {\n          type: target,\n          val: runtime[target].val,\n          speed: runtime[target].speed ? { set_point: runtime[target].speed.set_point } : undefined\n        }\n      }\n    });\n\n  } else {\n    // Röle kontrolü\n    if ([\"on\", \"off\"].includes(type)) {\n      const relay = getRelayInfo(target);\n      if (relay) {\n        const val = type === \"on\";\n        relay.array[relay.bit] = val;\n        runtime[target] = { val: type };\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: target, val: type } } });\n      }\n    }\n\n    // Loader kontrolü\n    if (target === \"loader\" && [\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const relayKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n        .filter(([_, val]) => val.group === \"loader\")\n        .map(([key]) => key);\n\n      const relays = Object.fromEntries(\n        relayKeys.map(key => [key, getRelayInfo(key)]).filter(([_, info]) => info)\n      );\n\n      const motor = relays[\"loader_motor\"];\n      const fwd = relays[\"loader_forward_valve\"];\n      const rev = relays[\"loader_reverse_valve\"];\n\n      if (motor && fwd && rev) {\n        if (type === \"forward_on\") {\n          motor.array[motor.bit] = true;\n          fwd.array[fwd.bit] = true;\n          rev.array[rev.bit] = false;\n        } else if (type === \"reverse_on\") {\n          motor.array[motor.bit] = true;\n          fwd.array[fwd.bit] = false;\n          rev.array[rev.bit] = true;\n        } else if (type === \"off\") {\n          motor.array[motor.bit] = false;\n          fwd.array[fwd.bit] = false;\n          rev.array[rev.bit] = false;\n        }\n        runtime.loader = { val: type };\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: type } } });\n      }\n    }\n\n    // Röle mesajları yalnızca relay işlemleri yapıldıysa oluşturulsun\n    relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n    relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n  }\n}\n\n// flowContext güncelle\nflow.set(\"flow\", flowData);\n\n// === aralıkla mesaj gönderme ===\nconst allMsgs = [];\nrelayMsgs.forEach(m => allMsgs.push([0, m])); // port 1\nsinamicsMsgs.forEach(m => allMsgs.push([1, m])); // port 2\nevtMsgs.forEach(m => allMsgs.push([2, m])); // port 3\n\nallMsgs.forEach((item, i) => {\n  const [portIndex, msgObj] = item;\n  setTimeout(() => {\n    node.send([\n      portIndex === 0 ? msgObj : null,\n      portIndex === 1 ? msgObj : null,\n      portIndex === 2 ? msgObj : null\n    ]);\n  }, i * 50);\n});\n\n// Bu function node'dan anında bir şey döndürmüyoruz\nreturn null;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst relayChannels1 = config.io.relay_outputs_1.channels || {};\nconst relayChannels2 = config.io.relay_outputs_2.channels || {};\nconst unitid1 = config.io.relay_outputs_1.unitid;\nconst unitid2 = config.io.relay_outputs_2.unitid;\n\nlet currentArray1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet currentArray2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\nfunction getRelayInfo(name) {\n  if (relayChannels1?.[name]) return { array: currentArray1, bit: relayChannels1[name].map, unitid: unitid1, arrayName: \"last_write_array_1\" };\n  if (relayChannels2?.[name]) return { array: currentArray2, bit: relayChannels2[name].map, unitid: unitid2, arrayName: \"last_write_array_2\" };\n  return null;\n}\n\nfunction createRelayMsg(array, unitid, arrayName) {\n  let word = 0;\n  for (let i = 0; i < 8; i++) {\n    if (array[i]) word |= (1 << i);\n  }\n  context.set(arrayName, array);\n  return { payload: { value: word, fc: 6, unitid, address: 128, quantity: 1 } };\n}\n\nconst relayMsgs = [];\nconst sinamicsMsgs = [];\nconst evtMsgs = [];\n\nfunction enqueueAll() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  const allMsgs = [];\n  relayMsgs.forEach(m => allMsgs.push([0, m]));\n  sinamicsMsgs.forEach(m => allMsgs.push([1, m]));\n  evtMsgs.forEach(m => allMsgs.push([2, m]));\n  sendQueue.push(...allMsgs);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n  const [portIndex, msgObj] = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n  node.send([\n    portIndex === 0 ? msgObj : null,\n    portIndex === 1 ? msgObj : null,\n    portIndex === 2 ? msgObj : null\n  ]);\n  setTimeout(processQueue, 50);\n}\n\n// === Toplu OFF ===\nfunction doAllOff() {\n  currentArray1 = Array(8).fill(false);\n  currentArray2 = Array(8).fill(false);\n  const emBit = relayChannels2.emergency_contactor?.map;\n  if (emBit !== undefined) currentArray2[emBit] = runtime.emergency_contactor?.val === \"on\";\n\n  context.set(\"last_write_array_1\", currentArray1);\n  context.set(\"last_write_array_2\", currentArray2);\n\n  for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {\n    if (name === \"emergency_contactor\") continue;\n    if (runtime[name]) {\n      runtime[name].val = \"off\";\n      evtMsgs.push({ payload: { method: \"evt\", params: { type: name, val: \"off\" } } });\n    }\n  }\n\n  // Loader OFF\n  const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n    .filter(([_, val]) => val.group === \"loader\")\n    .map(([key]) => key);\n  loaderKeys.forEach(key => {\n    const r = getRelayInfo(key);\n    if (r) r.array[r.bit] = false;\n  });\n  runtime.loader = { val: \"off\" };\n  evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: \"off\" } } });\n\n  // SINAMICS OFF\n  for (const [name, sin] of Object.entries(config.sinamics?.channels || {})) {\n    sinamicsMsgs.push({ payload: { value: config.sinamics.command_words.off, fc: 6, unitid: sin.unitid, address: 99, quantity: 1 } });\n    if (!runtime[name]) runtime[name] = {};\n    runtime[name].val = \"off\";\n    if (runtime[name].speed?.set_point) {\n      const value = Math.round(runtime[name].speed.set_point / 100 * config.sinamics.speed_max);\n      sinamicsMsgs.push({ payload: { value, fc: 6, unitid: sin.unitid, address: 100, quantity: 1 } });\n    }\n    evtMsgs.push({ payload: { method: \"evt\", params: { type: name, val: runtime[name].val, speed: runtime[name].speed ? { set_point: runtime[name].speed.set_point } : undefined } } });\n  }\n\n  relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n  relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n  enqueueAll();\n}\n\n// === Restore ===\nif (type === \"restore\" && target === \"all\") {\n  evtMsgs.push({ payload: { method: \"evt\", params: { type: \"emergency_contactor\", val: \"on\" } } });\n  const emRelay = getRelayInfo(\"emergency_contactor\");\n  if (emRelay) {\n    emRelay.array[emRelay.bit] = true;\n    relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));\n  }\n  enqueueAll();\n  setTimeout(doAllOff, 10000);\n} else if (type === \"off\" && target === \"all\") {\n  doAllOff();\n} else {\n  const sinamics = config.sinamics?.channels?.[target];\n  if (sinamics) {\n    const unitid = sinamics.unitid;\n    const commandWords = config.sinamics.command_words;\n    const speedMax = config.sinamics.speed_max;\n    if ([\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const value = commandWords[type];\n      if (value != null) {\n        sinamicsMsgs.push({ payload: { value, fc: 6, unitid, address: 99, quantity: 1 } });\n        if (!runtime[target]) runtime[target] = {};\n        runtime[target].val = type;\n      }\n    }\n    if (type === \"speed\" && typeof set_point === \"number\") {\n      const value = Math.round(set_point / 100 * speedMax);\n      sinamicsMsgs.push({ payload: { value, fc: 6, unitid, address: 100, quantity: 1 } });\n      if (!runtime[target]) runtime[target] = {};\n      if (!runtime[target].speed) runtime[target].speed = {};\n      runtime[target].speed.set_point = set_point;\n    }\n    evtMsgs.push({ payload: { method: \"evt\", params: { type: target, val: runtime[target].val, speed: runtime[target].speed ? { set_point: runtime[target].speed.set_point } : undefined } } });\n    enqueueAll();\n  } else {\n    if ([\"on\", \"off\"].includes(type)) {\n      const relay = getRelayInfo(target);\n      if (relay) {\n        const val = type === \"on\";\n        relay.array[relay.bit] = val;\n        runtime[target] = { val: type };\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: target, val: type } } });\n      }\n    }\n\n    // === Tekil loader komutları için güncelleme ===\n    if (target === \"loader\" && [\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n        .filter(([_, val]) => val.group === \"loader\")\n        .map(([key]) => key);\n      const relays = Object.fromEntries(loaderKeys.map(key => [key, getRelayInfo(key)]).filter(([_, info]) => info));\n      const motor = relays[\"loader_motor\"];\n      const fwd = relays[\"loader_forward_valve\"];\n      const rev = relays[\"loader_reverse_valve\"];\n      if (motor && fwd && rev) {\n        if (type === \"forward_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = true; rev.array[rev.bit] = false; }\n        else if (type === \"reverse_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = false; rev.array[rev.bit] = true; }\n        else if (type === \"off\") { motor.array[motor.bit] = false; fwd.array[fwd.bit] = false; rev.array[rev.bit] = false; }\n\n        // runtime güncelle\n        runtime.loader = { val: type };\n        runtime.loader_motor = { val: type === \"off\" ? \"off\" : \"on\" };\n        runtime.loader_forward_valve = { val: type === \"off\" ? \"off\" : (type === \"forward_on\" ? \"on\" : \"off\") };\n        runtime.loader_reverse_valve = { val: type === \"off\" ? \"off\" : (type === \"reverse_on\" ? \"on\" : \"off\") };\n\n        // evt mesajları ekle\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: type } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_motor\", val: runtime.loader_motor.val } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_forward_valve\", val: runtime.loader_forward_valve.val } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_reverse_valve\", val: runtime.loader_reverse_valve.val } } });\n      }\n    }\n\n    relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n    relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n    enqueueAll();\n  }\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
@@ -520,7 +520,8 @@
                 "69b69a40e08aa884"
             ],
             [
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "3bb33e35ca7ba828"
             ]
         ]
     },
@@ -554,7 +555,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "fsm",
-        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.state;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.state = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(1, \"fsm\", { state: currentState });\n  }\n}\n\nfunction sendCmd(port, type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[port - 1].push(msg);\n}\n\nfunction sendEvt(port, type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[port - 1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(1, \"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(1, \"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(1, \"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(1, \"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"emergency_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"stop\") {\n      sendCmd(1, \"off\", \"all\");\n      transition(\"stop\");\n\n    } else if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\" && runtime.humidity_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n      } else if (runtime.humidity_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      }\n      sendCmd(1, \"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(1, \"on\", \"fan_pwm\");\n      sendCmd(1, \"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(1, \"off\", \"all\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward_on\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return;\n      }\n\n    } else if (type === \"reverse_on\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return;\n      }\n    }\n    outputs[0].push(msg);\n\n  } else {\n    // default: gelen mesajı olduğu gibi 1. porta ilet\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.state;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.state = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(2, \"fsm\", { state: currentState });\n  }\n}\n\nfunction sendCmd(port, type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[port - 1].push(msg);\n}\n\nfunction sendEvt(port, type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[port - 1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(1, \"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(1, \"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(1, \"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(1, \"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"emergency_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"stop\") {\n      sendCmd(1, \"off\", \"all\");\n      transition(\"stop\");\n\n    } else if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\" && runtime.humidity_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"fan_pwm\");\n      } else if (runtime.humidity_detector_dig.val === \"off\") {\n        sendCmd(1, \"on\", \"water_pump_pwm\");\n      }\n      sendCmd(1, \"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(1, \"on\", \"fan_pwm\");\n      sendCmd(1, \"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(1, \"off\", \"all\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward_on\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return;\n      }\n\n    } else if (type === \"reverse_on\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return;\n      }\n    }\n    outputs[0].push(msg);\n\n  } else {\n    // default: gelen mesajı olduğu gibi 1. porta ilet\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -577,7 +578,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "mqtt_manager",
-        "func": "// Sabitler\nconst TELEMETRY_TOPIC = \"v1/devices/me/telemetry\";\nconst RPC_RESPONSE_PREFIX = \"v1/devices/me/rpc/response/\";\n\nconst topic = msg.topic || \"\";\nconst payload = msg.payload || {};\nconst method = payload?.method || \"\";\nconst params = payload?.params || {};\n\nconst flowData = flow.get(\"flow\") || {};\n\n// Güvenli msgId (topic beklenen formatta değilse 'unknown' kullan)\nconst msgId = (topic.split(\"/\").pop()) || \"unknown\";\n\nfunction getValueAtPath(obj, path) {\n    if (!Array.isArray(path) || path.length === 0) return obj;\n    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : null), obj);\n}\n\nfunction setValueAtPath(obj, path, value) {\n    if (!Array.isArray(path) || path.length === 0) {\n        throw new Error(\"Invalid path for set\");\n    }\n    let current = obj;\n    for (let i = 0; i < path.length - 1; i++) {\n        const key = path[i];\n        if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {\n            current[key] = {};\n        }\n        current = current[key];\n    }\n    current[path[path.length - 1]] = value;\n}\n\nfunction buildRpcResponse(id, content) {\n    return {\n        topic: RPC_RESPONSE_PREFIX + id,\n        payload: content\n    };\n}\n\nfunction buildTelemetryMsg(content) {\n    return {\n        topic: TELEMETRY_TOPIC,\n        payload: content\n    };\n}\n\n// 1) evt\nif (method === \"evt\") {\n    const subType = params?.type;\n    if (subType === \"telemetry_periodical\") {\n        return [buildTelemetryMsg(flowData.runtime || {}), null];\n    } else {\n        const key = params?.type;\n\n        // Hem val hem speed varsa\n        if (params?.val !== undefined && params?.speed !== undefined) {\n            const formatted = { [key]: { val: params.val, speed: params.speed } };\n            return [buildTelemetryMsg(formatted), null];\n        }\n        // Sadece val varsa\n        else if (params?.val !== undefined) {\n            const formatted = { [key]: { val: params.val } };\n            return [buildTelemetryMsg(formatted), null];\n        }\n        // Sadece speed varsa (garanti olsun)\n        else if (params?.speed !== undefined) {\n            const formatted = { [key]: { speed: params.speed } };\n            return [buildTelemetryMsg(formatted), null];\n        }\n\n        return [null, null];\n    }\n}\n\n// 2) cmd\nif (method === \"cmd\") {\n    return [buildRpcResponse(msgId, { response: true }), { payload }];\n}\n\n// 3) set/get tipi dot-path'li method'lar\nconst [action, ...pathParts] = method.split(\".\");\n\nif (action === \"get\") {\n    try {\n        const value = getValueAtPath(flowData, pathParts);\n        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null];\n    }\n}\n\nif (action === \"set\") {\n    try {\n        if (!pathParts || pathParts.length === 0) {\n            return [buildRpcResponse(msgId, { error: \"Invalid set path\" }), null];\n        }\n        const newValue = params?.value;\n        setValueAtPath(flowData, pathParts, newValue);\n        flow.set(\"flow\", flowData);\n        return [buildRpcResponse(msgId, { response: true }), null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null];\n    }\n}\n\n// Bilinmeyen method'lar\nreturn [null, null];\n",
+        "func": "// Sabitler\nconst TELEMETRY_TOPIC = \"v1/devices/me/telemetry\";\nconst RPC_RESPONSE_PREFIX = \"v1/devices/me/rpc/response/\";\n\nconst topic = msg.topic || \"\";\nconst payload = msg.payload || {};\nconst method = payload?.method || \"\";\nconst params = payload?.params || {};\n\nconst flowData = flow.get(\"flow\") || {};\n\n// Güvenli msgId (topic beklenen formatta değilse 'unknown' kullan)\nconst msgId = (topic.split(\"/\").pop()) || \"unknown\";\n\nfunction getValueAtPath(obj, path) {\n    if (!Array.isArray(path) || path.length === 0) return obj;\n    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : null), obj);\n}\n\nfunction setValueAtPath(obj, path, value) {\n    if (!Array.isArray(path) || path.length === 0) {\n        throw new Error(\"Invalid path for set\");\n    }\n    let current = obj;\n    for (let i = 0; i < path.length - 1; i++) {\n        const key = path[i];\n        if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {\n            current[key] = {};\n        }\n        current = current[key];\n    }\n    current[path[path.length - 1]] = value;\n}\n\nfunction buildRpcResponse(id, content) {\n    return {\n        topic: RPC_RESPONSE_PREFIX + id,\n        payload: content\n    };\n}\n\nfunction buildTelemetryMsg(content) {\n    return {\n        topic: TELEMETRY_TOPIC,\n        payload: content\n    };\n}\n\n// 1) evt\nif (method === \"evt\") {\n    const subType = params?.type;\n\n    if (subType === \"telemetry_periodical\") {\n        return [buildTelemetryMsg(flowData.runtime || {}), null];\n    } \n    // Yeni ekleme: fsm eventi\n    else if (subType === \"fsm\") {\n        const formatted = { fsm: { state: params.state } };\n        return [buildTelemetryMsg(formatted), null];\n    }\n    else {\n        const key = params?.type;\n\n        if (params?.val !== undefined && params?.speed !== undefined) {\n            const formatted = { [key]: { val: params.val, speed: params.speed } };\n            return [buildTelemetryMsg(formatted), null];\n        } else if (params?.val !== undefined) {\n            const formatted = { [key]: { val: params.val } };\n            return [buildTelemetryMsg(formatted), null];\n        } else if (params?.speed !== undefined) {\n            const formatted = { [key]: { speed: params.speed } };\n            return [buildTelemetryMsg(formatted), null];\n        }\n\n        return [null, null];\n    }\n}\n\n// 2) cmd\nif (method === \"cmd\") {\n    return [buildRpcResponse(msgId, { response: true }), { payload }];\n}\n\n// 3) set/get tipi dot-path'li method'lar\nconst [action, ...pathParts] = method.split(\".\");\n\nif (action === \"get\") {\n    try {\n        const value = getValueAtPath(flowData, pathParts);\n        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null];\n    }\n}\n\nif (action === \"set\") {\n    try {\n        if (!pathParts || pathParts.length === 0) {\n            return [buildRpcResponse(msgId, { error: \"Invalid set path\" }), null];\n        }\n        const newValue = params?.value;\n        setValueAtPath(flowData, pathParts, newValue);\n        flow.set(\"flow\", flowData);\n        return [buildRpcResponse(msgId, { response: true }), null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null];\n    }\n}\n\n// Bilinmeyen method'lar\nreturn [null, null];\n",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -588,7 +589,8 @@
         "y": 60,
         "wires": [
             [
-                "b7b87a40dd91a021"
+                "b7b87a40dd91a021",
+                "109faf048fe0b87d"
             ],
             [
                 "22442867c06e05b8"
@@ -639,26 +641,6 @@
         ]
     },
     {
-        "id": "a218a71fd357ab14",
-        "type": "function",
-        "z": "2d8538969c77a5df",
-        "name": "restore",
-        "func": "\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "// Flow verilerini çek\nconst flowData = flow.get(\"flow\") || {};\nconst runtime = flowData.runtime || {};\nconst config = flowData.config || {};\n\n// bekle ve emergency_contactor'u ON yap\nsetTimeout(() => {\n\n    node.send({\n        payload: {\n            method: \"cmd\",\n            params: { type: \"on\", target: \"emergency_contactor\" }\n        }\n    });\n\n    // bekle ve ALL OFF gönder (emergency_contactor hariç)\n    setTimeout(() => {\n\n        node.send({\n            payload: {\n                method: \"cmd\",\n                params: { type: \"off\", target: \"all\" }\n            }\n        });\n\n        // bekle ve yalnızca sinamics speed komutları restore et\n        setTimeout(() => {\n\n            const cmds = [];\n\n            for (const [target, sin] of Object.entries(config.sinamics?.channels || {})) {\n                const state = runtime[target];\n                if (state?.speed && typeof state.speed.set_point === \"number\") {\n                    cmds.push({\n                        payload: {\n                            method: \"cmd\",\n                            params: {\n                                type: \"speed\",\n                                target: target,\n                                set_point: state.speed.set_point\n                            }\n                        }\n                    });\n                }\n            }\n\n            // Tüm sinamics speed komutlarını sırayla gönder\n            function sendSequentially(messages, delayMs) {\n                messages.forEach((msg, index) => {\n                    setTimeout(() => {\n                        node.send(msg);\n                    }, index * delayMs);\n                });\n            }\n\n            sendSequentially(cmds, 100);\n\n        }, 5000);\n\n    }, 10000);\n\n}, 5000);\n",
-        "finalize": "",
-        "libs": [],
-        "x": 580,
-        "y": 540,
-        "wires": [
-            [
-                "69b69a40e08aa884"
-            ]
-        ]
-    },
-    {
         "id": "2b810660372548f4",
         "type": "function",
         "z": "2d8538969c77a5df",
@@ -702,6 +684,530 @@
                 "db72d07653f1bbe9"
             ],
             []
+        ]
+    },
+    {
+        "id": "341579e5df71af16",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "restore",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"restore\", \"target\": \"all\"}}",
+        "payloadType": "json",
+        "x": 580,
+        "y": 540,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "2e608d1f6d13eaa3",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"all\"}}",
+        "payloadType": "json",
+        "x": 690,
+        "y": 580,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "fd849181bdc7e9d1",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "fan_forward_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"forward_on\", \"target\": \"fan\"}}",
+        "payloadType": "json",
+        "x": 720,
+        "y": 620,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "f31ff82f16972ff2",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "fan_off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"fan\"}}",
+        "payloadType": "json",
+        "x": 690,
+        "y": 660,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "1bdbe417c585e677",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "fan_speed",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"speed\", \"set_point\": 100, \"target\": \"fan\"}}",
+        "payloadType": "json",
+        "x": 700,
+        "y": 700,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "35d99843921e2a97",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"light\"}}",
+        "payloadType": "json",
+        "x": 690,
+        "y": 740,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "18a80242ddf6ec40",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"light\"}}",
+        "payloadType": "json",
+        "x": 690,
+        "y": 780,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "55ed0b3176264d8b",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "loader_forward_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"forward_on\", \"target\": \"loader\"}}",
+        "payloadType": "json",
+        "x": 730,
+        "y": 820,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "35e3e06ed12def6f",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "loader_reverse_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"reverse_on\", \"target\": \"loader\"}}",
+        "payloadType": "json",
+        "x": 730,
+        "y": 860,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "bd40fc99e2d46598",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "loader_off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"loader\"}}",
+        "payloadType": "json",
+        "x": 700,
+        "y": 900,
+        "wires": [
+            [
+                "69b69a40e08aa884"
+            ]
+        ]
+    },
+    {
+        "id": "b46b2aa74ff4f4a1",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "start",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"start\", \"target\": \"fsm\"}}",
+        "payloadType": "json",
+        "x": 1210,
+        "y": 360,
+        "wires": [
+            [
+                "22442867c06e05b8"
+            ]
+        ]
+    },
+    {
+        "id": "0286b8b9dd033644",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "stop",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"stop\", \"target\": \"fsm\"}}",
+        "payloadType": "json",
+        "x": 1210,
+        "y": 400,
+        "wires": [
+            [
+                "22442867c06e05b8"
+            ]
+        ]
+    },
+    {
+        "id": "d1510e50949d6820",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "dry",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"dry\", \"target\": \"fsm\"}}",
+        "payloadType": "json",
+        "x": 1210,
+        "y": 440,
+        "wires": [
+            [
+                "22442867c06e05b8"
+            ]
+        ]
+    },
+    {
+        "id": "36e4081c0badd647",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "end",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"end\", \"target\": \"fsm\"}}",
+        "payloadType": "json",
+        "x": 1210,
+        "y": 480,
+        "wires": [
+            [
+                "22442867c06e05b8"
+            ]
+        ]
+    },
+    {
+        "id": "7701af895b46dbeb",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "telemetry_periodical",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "60",
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"telemetry_periodical\"}}",
+        "payloadType": "json",
+        "x": 620,
+        "y": 480,
+        "wires": [
+            [
+                "8701a07643f54a7b",
+                "085e9b437f1d602e"
+            ]
+        ]
+    },
+    {
+        "id": "3bb33e35ca7ba828",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "109faf048fe0b87d",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1200,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "085e9b437f1d602e",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "98b3c08b52791d5d",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_pulse_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"light_pulse\"}}",
+        "payloadType": "json",
+        "x": 370,
+        "y": 420,
+        "wires": [
+            [
+                "8701a07643f54a7b"
+            ]
+        ]
+    },
+    {
+        "id": "75be3596dbcb1af4",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_pulse_off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"light_pulse\"}}",
+        "payloadType": "json",
+        "x": 370,
+        "y": 460,
+        "wires": [
+            [
+                "8701a07643f54a7b"
+            ]
+        ]
+    },
+    {
+        "id": "deca88e93d1a2b53",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_pwm_on",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"light_pwm\"}}",
+        "payloadType": "json",
+        "x": 370,
+        "y": 500,
+        "wires": [
+            [
+                "8701a07643f54a7b"
+            ]
+        ]
+    },
+    {
+        "id": "b2260a867008fa72",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "light_pwm_off",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"off\", \"target\": \"light_pwm\"}}",
+        "payloadType": "json",
+        "x": 370,
+        "y": 540,
+        "wires": [
+            [
+                "8701a07643f54a7b"
+            ]
         ]
     }
 ]

@@ -64,7 +64,7 @@ const flowData = {
     timers: {      
       fan_pwm: {
         form: "pwm",
-        t_duty: 2, t_cycle: 3, unit: "min",
+        t_duty: 10, t_cycle: 180, unit: "min",
         pass: {
           1: {method: "cmd", params: {type: "forward_on", target: "fan"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "fan"}, port: 2}
@@ -72,7 +72,7 @@ const flowData = {
       },
       water_pump_pwm: {
         form: "pwm",
-        t_duty: 2, t_cycle: 3, unit: "min",
+        t_duty: 15, t_cycle: 360, unit: "min",
         pass: {
           1: {method: "cmd", params: {type: "forward_on", target: "water_pump"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "water_pump"}, port: 2}
@@ -86,21 +86,21 @@ const flowData = {
         }
       },
       light_pwm: {
-        form: "pwm", t_duty: 2, t_cycle: 4, unit: "s",
+        form: "pwm", t_duty: 2, t_cycle: 5, unit: "s",
         pass: {
           1: {method: "cmd", params: {type: "on", target: "light"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "light"}, port: 2}
         }        
       },
       buzzer_pulse: {
-        form: "delay", duration: 3, unit: "s",
+        form: "delay", duration: 2, unit: "s",
         pass: {
           1: {method: "cmd", params: {type: "on", target: "buzzer"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "buzzer"}, port: 2}
         }
       },
       buzzer_pwm: {
-        form: "pwm", t_duty: 2, t_cycle: 4, unit: "s",
+        form: "pwm", t_duty: 2, t_cycle: 5, unit: "s",
         pass: {
           1: {method: "cmd", params: {type: "on", target: "buzzer"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "buzzer"}, port: 2}
@@ -117,7 +117,7 @@ const flowData = {
       telemetry_periodical: {
         form: "loop", interval: 2, unit: "min",
         pass: {
-          4: {method: "evt", params: {type: "telemetry_periodical", val: null}, port: 3}
+          1: {method: "evt", params: {type: "telemetry_periodical", val: null}, port: 3}
         }        
       }
     }

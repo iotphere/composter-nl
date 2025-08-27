@@ -51,34 +51,38 @@ if (method === "evt") {
     const subType = params?.type;
 
     if (subType === "telemetry_periodical") {
-        return [buildTelemetryMsg(flowData.runtime || {}), null];
+        return [buildTelemetryMsg(flowData.runtime || {}), null, null];
     } 
-    // Yeni ekleme: fsm eventi
     else if (subType === "fsm") {
         const formatted = { fsm: { state: params.state } };
-        return [buildTelemetryMsg(formatted), null];
+        return [buildTelemetryMsg(formatted), null, null];
     }
     else {
         const key = params?.type;
 
         if (params?.val !== undefined && params?.speed !== undefined) {
             const formatted = { [key]: { val: params.val, speed: params.speed } };
-            return [buildTelemetryMsg(formatted), null];
+            return [buildTelemetryMsg(formatted), null, null];
         } else if (params?.val !== undefined) {
             const formatted = { [key]: { val: params.val } };
-            return [buildTelemetryMsg(formatted), null];
+            return [buildTelemetryMsg(formatted), null, null];
         } else if (params?.speed !== undefined) {
             const formatted = { [key]: { speed: params.speed } };
-            return [buildTelemetryMsg(formatted), null];
+            return [buildTelemetryMsg(formatted), null, null];
         }
 
-        return [null, null];
+        return [null, null, null];
     }
 }
 
 // 2) cmd
 if (method === "cmd") {
-    return [buildRpcResponse(msgId, { response: true }), { payload }];
+    // Özel "inject → flow_context" komutu kontrolü
+    if (params?.type === "inject" && params?.target === "flow_context") {
+        return [buildRpcResponse(msgId, { response: true }), null, { payload }];
+    }
+    // Normal cmd
+    return [buildRpcResponse(msgId, { response: true }), { payload }, null];
 }
 
 // 3) set/get tipi dot-path'li method'lar
@@ -87,25 +91,25 @@ const [action, ...pathParts] = method.split(".");
 if (action === "get") {
     try {
         const value = getValueAtPath(flowData, pathParts);
-        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null];
+        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null, null];
     } catch (err) {
-        return [buildRpcResponse(msgId, { error: err.message }), null];
+        return [buildRpcResponse(msgId, { error: err.message }), null, null];
     }
 }
 
 if (action === "set") {
     try {
         if (!pathParts || pathParts.length === 0) {
-            return [buildRpcResponse(msgId, { error: "Invalid set path" }), null];
+            return [buildRpcResponse(msgId, { error: "Invalid set path" }), null, null];
         }
         const newValue = params?.value;
         setValueAtPath(flowData, pathParts, newValue);
         flow.set("flow", flowData);
-        return [buildRpcResponse(msgId, { response: true }), null];
+        return [buildRpcResponse(msgId, { response: true }), null, null];
     } catch (err) {
-        return [buildRpcResponse(msgId, { error: err.message }), null];
+        return [buildRpcResponse(msgId, { error: err.message }), null, null];
     }
 }
 
 // Bilinmeyen method'lar
-return [null, null];
+return [null, null, null];

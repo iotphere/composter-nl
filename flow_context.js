@@ -1,3 +1,11 @@
+const payload = msg.payload || {};
+const method = payload.method || "";
+const params = payload.params || {};
+
+if (!(method === "cmd" && params.type === "inject" && params.target === "flow_context")) {
+    return null; // diğer tüm mesajları görmezden gel
+}
+
 const flowData = {
   config: {
     labels: {true: "on", false: "off"},

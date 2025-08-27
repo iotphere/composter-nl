@@ -29,16 +29,12 @@ function pushMessage(timer, passKey, out, runtime = {}, target = null) {
     for (const [key, val] of Object.entries(message.params)) {
       if (val === null && runtime[target][key] !== undefined) {
         message.params[key] = runtime[target][key];
-      } else if (
-        typeof val === "object" &&
-        val !== null &&
-        "val" in val
-      ) {
+      } else if (typeof val === "object" && val !== null && "val" in val) {
         message.params[key].val = runtime[target].count;
       }
     }
 
-    // day_counter özel başlangıç
+    // day_counter başlangıç değeri mesajına özel
     if (timer.form === "counter" && passKey === 4 && message.params.val === undefined) {
       message.params.val = runtime[target].count;
     }
@@ -72,9 +68,8 @@ function timerOn(timer, rt, now, out, target) {
       break;
 
     case "counter":
-      // RESET
       rt.on_time = now;
-      rt.count = timer.base;
+      rt.count = timer.base;  // sayacın başlangıç değeri
       rt.next_time = now + toMs(timer.interval, timer.unit);
 
       // Başlangıçta pass.4 val = base

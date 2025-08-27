@@ -84,11 +84,7 @@ if (method === "evt") {
 
   if (target === "fsm") {
 
-    if (type === "stop") {
-      sendCmd("off", "all");
-      transition("stop");
-
-    } else if (type === "start") {
+    if (type === "start") {
       if (runtime.oxygen_detector_dig.val === "off") {
         sendCmd("on", "fan_pwm");
       } else if (runtime.oxygen_detector_dig.val === "on") {

@@ -150,7 +150,7 @@ const flowData = {
     humidity_detector_dig: {val: "off"},
     humidity_detector_ang: {val: "off"},
     kwh_detector: {val: "off"},
-    fsm: {state: "stop"}
+    fsm: {state: "end"}
   }
 }
 

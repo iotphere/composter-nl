@@ -395,7 +395,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "light": {
                 "val": "off"
@@ -413,13 +413,13 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "off"
+                "val": "forward_on"
             },
             "water_pump": {
                 "speed": {
                     "set_point": 100
                 },
-                "val": "off"
+                "val": "forward_on"
             },
             "discharger": {
                 "speed": {
@@ -452,7 +452,7 @@
                 "val": 0
             },
             "fsm": {
-                "state": "stop"
+                "state": "start"
             }
         }
     }

@@ -17,7 +17,7 @@
         false,
         false,
         false,
-        false
+        true
     ],
     "sendQueue": [],
     "isSending": false

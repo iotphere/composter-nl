@@ -2,33 +2,33 @@
     "runtime": {
         "fan_pwm": {
             "state": "on",
-            "on_time": 1756291318009,
+            "on_time": 1756297323144,
             "phase": "a",
-            "phase_until": 1756291918009
+            "phase_until": 1756297923144
         },
         "water_pump_pwm": {
             "state": "on",
-            "on_time": 1756291318009,
+            "on_time": 1756297323144,
             "phase": "a",
-            "phase_until": 1756292218009
+            "phase_until": 1756298223144
         },
         "day_counter": {
             "state": "on",
-            "on_time": 1756291318009,
+            "on_time": 1756297323144,
             "count": 21,
-            "next_time": 1756377718009
+            "next_time": 1756383723144
         },
         "light_pulse": {
-            "state": "off",
+            "state": "on",
             "done": true,
-            "on_time": 1756261369696,
-            "phase_until": 1756261371696
+            "on_time": 1756297358568,
+            "phase_until": 1756297360568
         },
         "light_pwm": {
             "state": "off",
             "phase": null,
-            "on_time": 1756261379812,
-            "phase_until": 1756261395539
+            "on_time": 1756297383966,
+            "phase_until": 1756297437589
         },
         "buzzer_pulse": {
             "state": "off",
@@ -40,8 +40,8 @@
         },
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1756291310879,
-            "next_time": 1756291430879
+            "on_time": 1756297171569,
+            "next_time": 1756297891615
         },
         "day": {
             "val": 21

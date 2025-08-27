@@ -448,9 +448,6 @@
             "kwh_detector": {
                 "val": "off"
             },
-            "day": {
-                "val": 0
-            },
             "fsm": {
                 "state": "start"
             }

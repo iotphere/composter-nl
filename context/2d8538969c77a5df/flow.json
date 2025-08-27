@@ -330,8 +330,7 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day",
-                                "val": 21
+                                "type": "day"
                             },
                             "port": 3
                         }
@@ -395,7 +394,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "light": {
                 "val": "off"

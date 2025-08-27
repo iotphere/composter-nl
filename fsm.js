@@ -18,28 +18,28 @@ function transition(toState) {
     currentState = toState;
     flowData.runtime.fsm.state = currentState;
     flow.set("flow", flowData);
-    sendEvt(2, "fsm", { state: currentState });
+    sendEvt("fsm", { state: currentState });
   }
 }
 
-function sendCmd(port, type, target, extraParams = {}) {
+function sendCmd(type, target, extraParams = {}) {
   const msg = {
     payload: {
       method: "cmd",
       params: { type, target, ...extraParams }
     }
   };
-  outputs[port - 1].push(msg);
+  outputs[0].push(msg);
 }
 
-function sendEvt(port, type, extraParams = {}) {
+function sendEvt(type, extraParams = {}) {
   const msg = {
     payload: {
       method: "evt",
       params: { type, ...extraParams }
     }
   };
-  outputs[port - 1].push(msg);
+  outputs[1].push(msg);
 }
 
 // --- Ana mesaj işleme ---
@@ -48,29 +48,29 @@ if (method === "evt") {
   if (type === "oxygen_detector_dig") {
     if (currentState === "start") {
       if (val === "off") {
-        sendCmd(1, "on", "fan_pwm");
+        sendCmd("on", "fan_pwm");
       } else if (val === "on") {
-        sendCmd(1, "off", "fan_pwm");
+        sendCmd("off", "fan_pwm");
       }
     }
 
-  } else if (type === "humidity_detector_dig") {
+  } else if (type === "humidity_detector_ang") {
     if (currentState === "start") {
       if (val === "off") {
-        sendCmd(1, "on", "water_pump_pwm");
+        sendCmd("on", "water_pump_pwm");
       } else if (val === "on") {
-        sendCmd(1, "off", "water_pump_pwm");
+        sendCmd("off", "water_pump_pwm");
       }
     }
 
   } else if (type === "roof_forward_limit") {
     if (val === "off") {
-      sendCmd(1, "off", "roof");
+      sendCmd("off", "roof");
     }
 
   } else if (type === "roof_reverse_limit") {
     if (val === "off") {
-      sendCmd(1, "off", "roof");
+      sendCmd("off", "roof");
     }
 
   } else if (type === "cabinet_door") {
@@ -85,28 +85,30 @@ if (method === "evt") {
   if (target === "fsm") {
 
     if (type === "stop") {
-      sendCmd(1, "off", "all");
+      sendCmd("off", "all");
       transition("stop");
 
     } else if (type === "start") {
-      if (runtime.oxygen_detector_dig.val === "off" && runtime.humidity_detector_dig.val === "off") {
-        sendCmd(1, "on", "fan_pwm");
-        sendCmd(1, "on", "water_pump_pwm");
-      } else if (runtime.oxygen_detector_dig.val === "off") {
-        sendCmd(1, "on", "fan_pwm");
-      } else if (runtime.humidity_detector_dig.val === "off") {
-        sendCmd(1, "on", "water_pump_pwm");
+      if (runtime.oxygen_detector_dig.val === "off") {
+        sendCmd("on", "fan_pwm");
+      } else if (runtime.oxygen_detector_dig.val === "on") {
+        sendCmd("off", "fan_pwm");
       }
-      sendCmd(1, "on", "day_counter");
+      if (runtime.humidity_detector_ang.val === "off") {
+        sendCmd("on", "water_pump_pwm");
+      } else if (runtime.humidity_detector_ang.val === "on") {
+        sendCmd("off", "water_pump_pwm");
+      }
+      sendCmd("on", "day_counter");
       transition("start");
 
     } else if (type === "dry") {
-      sendCmd(1, "on", "fan_pwm");
-      sendCmd(1, "off", "water_pump_pwm");
+      sendCmd("on", "fan_pwm");
+      sendCmd("off", "water_pump_pwm");
       transition("dry");
 
     } else if (type === "end") {
-      sendCmd(1, "off", "all");
+      sendCmd("off", "all");
       transition("end");
     }
 
@@ -125,7 +127,6 @@ if (method === "evt") {
     outputs[0].push(msg);
 
   } else {
-    // default: gelen mesajı olduğu gibi 1. porta ilet
     outputs[0].push(msg);
   }
 }

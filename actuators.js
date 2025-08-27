@@ -115,6 +115,7 @@ if (type === "restore" && target === "all") {
   const emRelay = getRelayInfo("emergency_contactor");
   if (emRelay) {
     emRelay.array[emRelay.bit] = true;
+    runtime.emergency_contactor = { val: "on" };   // eksik olan eklendi
     relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));
   }
   enqueueAll();

@@ -7,7 +7,6 @@ const target = params.target;
 const type = params.type;
 
 const out = [[], [], []]; // Port 1,2,3
-
 let runtime = context.get("runtime") || {};
 
 function toMs(val, unit) {
@@ -34,7 +33,6 @@ function pushMessage(timer, passKey, out, runtime = {}, target = null) {
       }
     }
 
-    // day_counter başlangıç değeri mesajına özel
     if (timer.form === "counter" && passKey === 4 && message.params.val === undefined) {
       message.params.val = runtime[target].count;
     }
@@ -43,7 +41,7 @@ function pushMessage(timer, passKey, out, runtime = {}, target = null) {
   out[port].push({ payload: message });
 }
 
-function timerOn(timer, rt, now, out, target) {
+function timerOn(timer, rt, now, out, target, forcedCount = null) {
   rt.state = "on";
 
   switch (timer.form) {
@@ -69,10 +67,9 @@ function timerOn(timer, rt, now, out, target) {
 
     case "counter":
       rt.on_time = now;
-      rt.count = timer.base;  // sayacın başlangıç değeri
+      rt.count = forcedCount !== null ? forcedCount : timer.base;
       rt.next_time = now + toMs(timer.interval, timer.unit);
 
-      // Başlangıçta pass.4 val = base
       const entry4 = timer.pass?.[4];
       if (entry4) {
         entry4.params = entry4.params || {};
@@ -168,11 +165,19 @@ function timerTick(timers, runtime, now, out) {
   }
 }
 
+// --- CMD handling ---
 if (method === "cmd") {
-  if (timers[target]) {
-    if (!runtime[target]) {
-      runtime[target] = {};
-    }
+
+  // --- Special skip for day_counter ---
+  if (type === "skip" && target === "day_counter") {
+    if (!runtime[target]) runtime[target] = {};
+    const rt = runtime[target];
+
+    // day_counter'ı signal anına getir ve timerOn gibi başlat
+    timerOn(timers[target], rt, Date.now(), out, target, timers[target].signal);
+
+  } else if (timers[target]) {
+    if (!runtime[target]) runtime[target] = {};
     if (type === "on") {
       timerOn(timers[target], runtime[target], Date.now(), out, target);
     } else if (type === "off") {
@@ -181,20 +186,16 @@ if (method === "cmd") {
   } else if (target === "all" && type === "off") {
     for (const [key, timer] of Object.entries(timers)) {
       if (key === "telemetry_periodical") continue;
-      if (!runtime[key]) {
-        runtime[key] = {};
-      }
+      if (!runtime[key]) runtime[key] = {};
       timerOff(timer, runtime[key], out, key, true);
     }
     out[1].push({
-      payload: {
-        method: "cmd",
-        params: { type: "off", target: "all" }
-      }
+      payload: { method: "cmd", params: { type: "off", target: "all" } }
     });
   } else {
     out[1].push(msg);
   }
+
 } else if (method === "evt" && type === "timer_tick") {
   timerTick(timers, runtime, Date.now(), out);
 } else {

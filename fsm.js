@@ -99,6 +99,7 @@ if (method === "evt") {
       transition("start");
 
     } else if (type === "dry") {
+      sendCmd("skip", "day_counter");
       sendCmd("on", "fan_pwm");
       sendCmd("off", "water_pump_pwm");
       transition("dry");

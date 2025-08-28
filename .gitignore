@@ -1,6 +1,6 @@
 *
 !flows.json
-#!context/
-#!context/**
+!context/
+!context/**
 !.gitignore
 

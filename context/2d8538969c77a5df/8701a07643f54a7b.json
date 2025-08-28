@@ -2,46 +2,60 @@
     "runtime": {
         "fan_pwm": {
             "state": "on",
-            "on_time": 1756389372945,
-            "phase": "a",
-            "phase_until": 1756389972945
+            "on_time": 1756404922785,
+            "phase": "b",
+            "phase_until": 1756415722835,
+            "next_time": null
         },
         "water_pump_pwm": {
-            "state": "off",
-            "on_time": 1756389350360,
-            "phase": null,
-            "phase_until": 1756390250360
+            "state": "on",
+            "on_time": 1756404922785,
+            "phase": "b",
+            "phase_until": 1756426522856,
+            "next_time": null
         },
         "day_counter": {
             "state": "on",
-            "on_time": 1756389372945,
-            "count": 3,
-            "next_time": 1756475772945
+            "on_time": 1756404922785,
+            "count": 21,
+            "next_time": 1756491322785,
+            "phase_until": null,
+            "phase": null
         },
         "light_pulse": {
             "state": "off",
             "done": true,
-            "on_time": 1756301981053,
-            "phase_until": 1756301983053
+            "on_time": null,
+            "phase_until": null,
+            "next_time": null,
+            "phase": null
         },
         "light_pwm": {
             "state": "off",
             "phase": null,
-            "on_time": 1756301990617,
-            "phase_until": 1756302177480
+            "on_time": null,
+            "phase_until": null,
+            "next_time": null
         },
         "buzzer_pulse": {
             "state": "off",
-            "done": true
+            "done": true,
+            "on_time": null,
+            "next_time": null,
+            "phase_until": null,
+            "phase": null
         },
         "buzzer_pwm": {
             "state": "off",
-            "phase": null
+            "phase": null,
+            "on_time": null,
+            "next_time": null,
+            "phase_until": null
         },
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1756389252812,
-            "next_time": 1756389612830
+            "on_time": 1756404365748,
+            "next_time": 1756406885935
         },
         "day": {
             "val": 21

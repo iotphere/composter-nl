@@ -331,7 +331,7 @@
                             "method": "evt",
                             "params": {
                                 "type": "day",
-                                "val": 3
+                                "val": 21
                             },
                             "port": 3
                         }
@@ -413,7 +413,7 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "forward_on"
+                "val": "off"
             },
             "water_pump": {
                 "speed": {
@@ -449,7 +449,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "dry"
+                "state": "start"
             }
         }
     }

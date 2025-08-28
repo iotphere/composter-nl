@@ -28,8 +28,8 @@ const flowData = {
         config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
         unitid: 12,        
         channels: {
-          oxygen: {map: 0, change: 0.5, scale: {in_min: 400, in_max: 2000, out_min: 0, out_max: 100}, pro: {oxygen_detector_ang: {off: 30, on: 60}}},
-          humidity: {map: 1, change: 0.5, scale: {in_min: 400, in_max: 2000, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {off: 30, on: 60}}}
+          oxygen: {map: 0, change: 5, scale: {in_min: 400, in_max: 2000, out_min: 0, out_max: 100}, pro: {oxygen_detector_ang: {off: 30, on: 60}}},
+          humidity: {map: 1, change: 3, scale: {in_min: 400, in_max: 2000, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {off: 30, on: 60}}}
         }
       },
       relay_outputs_1: {

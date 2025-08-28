@@ -331,7 +331,7 @@
                             "method": "evt",
                             "params": {
                                 "type": "day",
-                                "val": 21
+                                "val": 3
                             },
                             "port": 3
                         }
@@ -395,7 +395,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "light": {
                 "val": "off"
@@ -413,7 +413,7 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "off"
+                "val": "forward_on"
             },
             "water_pump": {
                 "speed": {
@@ -449,7 +449,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "end"
+                "state": "dry"
             }
         }
     }

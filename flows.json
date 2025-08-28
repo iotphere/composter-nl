@@ -406,16 +406,13 @@
         "y": 540,
         "wires": [
             [
-                "0719549b97c80402",
-                "154074dafcf5bbbe"
+                "0719549b97c80402"
             ],
             [
-                "155eb5f34a3f5ca3",
-                "3db612a59529d8a0"
+                "155eb5f34a3f5ca3"
             ],
             [
-                "0b3654ab51cfd27c",
-                "1f0de96de4ba4da0"
+                "0b3654ab51cfd27c"
             ]
         ]
     },
@@ -506,7 +503,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "timer_manager",
-        "func": "const flowData = flow.get(\"flow\");\nconst timers = flowData.config.timers;\n\nconst method = msg?.payload?.method || msg?.method;\nconst params = msg?.payload?.params || msg?.params || {};\nconst target = params.target;\nconst type = params.type;\n\nconst out = [[], [], []]; // Port 1,2,3\n\nlet runtime = context.get(\"runtime\") || {};\n\nfunction toMs(val, unit) {\n  const map = { s: 1000, min: 60000, h: 3600000, d: 86400000 };\n  return val * (map[unit] ?? 1000);\n}\n\nfunction pushMessage(timer, passKey, out, runtime = {}, target = null) {\n  const entry = timer.pass?.[passKey];\n  if (!entry) return;\n\n  const message = RED.util.cloneMessage(entry);\n  const port = (entry.port ?? 0) - 1;\n  if (port < 0 || port > 2) return;\n\n  delete message.port;\n\n  if (message.params && target && runtime[target]) {\n    for (const [key, val] of Object.entries(message.params)) {\n      if (val === null && runtime[target][key] !== undefined) {\n        message.params[key] = runtime[target][key];\n      } else if (typeof val === \"object\" && val !== null && \"val\" in val) {\n        message.params[key].val = runtime[target].count;\n      }\n    }\n\n    // day_counter başlangıç değeri mesajına özel\n    if (timer.form === \"counter\" && passKey === 4 && message.params.val === undefined) {\n      message.params.val = runtime[target].count;\n    }\n  }\n\n  out[port].push({ payload: message });\n}\n\nfunction timerOn(timer, rt, now, out, target) {\n  rt.state = \"on\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.on_time = now;\n      rt.done = false;\n      rt.phase_until = now + toMs(timer.duration, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"pwm\":\n      rt.on_time = now;\n      rt.phase = \"a\";\n      rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"loop\":\n      rt.on_time = now;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.on_time = now;\n      rt.count = timer.base;  // sayacın başlangıç değeri\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n\n      // Başlangıçta pass.4 val = base\n      const entry4 = timer.pass?.[4];\n      if (entry4) {\n        entry4.params = entry4.params || {};\n        entry4.params.val = rt.count;\n      }\n\n      pushMessage(timer, 1, out, runtime, target);\n      pushMessage(timer, 4, out, runtime, target);\n      break;\n  }\n}\n\nfunction timerOff(timer, rt, out, target, suppressMessages = false) {\n  rt.state = \"off\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.done = true;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"pwm\":\n      rt.phase = null;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"loop\":\n      if (!suppressMessages) pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.count = 0;\n      if (!suppressMessages) {\n        pushMessage(timer, 3, out, runtime, target);\n        pushMessage(timer, 4, out, runtime, target);\n      }\n      break;\n  }\n}\n\nfunction timerTick(timers, runtime, now, out) {\n  for (const [key, timer] of Object.entries(timers)) {\n    const rt = runtime[key];\n    if (!rt || rt.state !== \"on\") continue;\n\n    switch (timer.form) {\n      case \"delay\":\n        if (!rt.done && now >= rt.phase_until) {\n          rt.done = true;\n          pushMessage(timer, 2, out);\n        }\n        break;\n\n      case \"pwm\":\n        if (now >= rt.phase_until) {\n          if (rt.phase === \"a\") {\n            rt.phase = \"b\";\n            rt.phase_until = now + toMs(timer.t_cycle - timer.t_duty, timer.unit);\n            pushMessage(timer, 2, out);\n          } else {\n            rt.phase = \"a\";\n            rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n            pushMessage(timer, 1, out);\n          }\n        }\n        break;\n\n      case \"loop\":\n        if (now >= rt.next_time) {\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n          pushMessage(timer, 1, out);\n        }\n        break;\n\n      case \"counter\":\n        if (now >= rt.next_time && rt.count > 0) {\n          rt.count -= 1;\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n\n          if (timer.signal !== undefined && rt.count === timer.signal) {\n            pushMessage(timer, 2, out, runtime, key);\n          }\n\n          pushMessage(timer, 4, out, runtime, key);\n\n          if (rt.count === 0) {\n            rt.state = \"off\";\n            pushMessage(timer, 3, out, runtime, key);\n          }\n        }\n        break;\n    }\n  }\n}\n\nif (method === \"cmd\") {\n  if (timers[target]) {\n    if (!runtime[target]) {\n      runtime[target] = {};\n    }\n    if (type === \"on\") {\n      timerOn(timers[target], runtime[target], Date.now(), out, target);\n    } else if (type === \"off\") {\n      timerOff(timers[target], runtime[target], out, target);\n    }\n  } else if (target === \"all\" && type === \"off\") {\n    for (const [key, timer] of Object.entries(timers)) {\n      if (key === \"telemetry_periodical\") continue;\n      if (!runtime[key]) {\n        runtime[key] = {};\n      }\n      timerOff(timer, runtime[key], out, key, true);\n    }\n    out[1].push({\n      payload: {\n        method: \"cmd\",\n        params: { type: \"off\", target: \"all\" }\n      }\n    });\n  } else {\n    out[1].push(msg);\n  }\n} else if (method === \"evt\" && type === \"timer_tick\") {\n  timerTick(timers, runtime, Date.now(), out);\n} else {\n  out[1].push(msg);\n}\n\ncontext.set(\"runtime\", runtime);\n\nreturn out.some(arr => arr.length) ? out : null;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst timers = flowData.config.timers;\n\nconst method = msg?.payload?.method || msg?.method;\nconst params = msg?.payload?.params || msg?.params || {};\nconst target = params.target;\nconst type = params.type;\n\nconst out = [[], [], []]; // Port 1,2,3\nlet runtime = context.get(\"runtime\") || {};\n\nfunction toMs(val, unit) {\n  const map = { s: 1000, min: 60000, h: 3600000, d: 86400000 };\n  return val * (map[unit] ?? 1000);\n}\n\nfunction pushMessage(timer, passKey, out, runtime = {}, target = null) {\n  const entry = timer.pass?.[passKey];\n  if (!entry) return;\n\n  const message = RED.util.cloneMessage(entry);\n  const port = (entry.port ?? 0) - 1;\n  if (port < 0 || port > 2) return;\n\n  delete message.port;\n\n  if (message.params && target && runtime[target]) {\n    for (const [key, val] of Object.entries(message.params)) {\n      if (val === null && runtime[target][key] !== undefined) {\n        message.params[key] = runtime[target][key];\n      } else if (typeof val === \"object\" && val !== null && \"val\" in val) {\n        message.params[key].val = runtime[target].count;\n      }\n    }\n\n    if (timer.form === \"counter\" && passKey === 4 && message.params.val === undefined) {\n      message.params.val = runtime[target].count;\n    }\n  }\n\n  out[port].push({ payload: message });\n}\n\nfunction timerOn(timer, rt, now, out, target, forcedCount = null) {\n  rt.state = \"on\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.on_time = now;\n      rt.done = false;\n      rt.phase_until = now + toMs(timer.duration, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"pwm\":\n      rt.on_time = now;\n      rt.phase = \"a\";\n      rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"loop\":\n      rt.on_time = now;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.on_time = now;\n      rt.count = forcedCount !== null ? forcedCount : timer.base;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n\n      const entry4 = timer.pass?.[4];\n      if (entry4) {\n        entry4.params = entry4.params || {};\n        entry4.params.val = rt.count;\n      }\n\n      pushMessage(timer, 1, out, runtime, target);\n      pushMessage(timer, 4, out, runtime, target);\n      break;\n  }\n}\n\nfunction timerOff(timer, rt, out, target, suppressMessages = false) {\n  rt.state = \"off\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.done = true;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"pwm\":\n      rt.phase = null;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"loop\":\n      if (!suppressMessages) pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.count = 0;\n      if (!suppressMessages) {\n        pushMessage(timer, 3, out, runtime, target);\n        pushMessage(timer, 4, out, runtime, target);\n      }\n      break;\n  }\n}\n\nfunction timerTick(timers, runtime, now, out) {\n  for (const [key, timer] of Object.entries(timers)) {\n    const rt = runtime[key];\n    if (!rt || rt.state !== \"on\") continue;\n\n    switch (timer.form) {\n      case \"delay\":\n        if (!rt.done && now >= rt.phase_until) {\n          rt.done = true;\n          pushMessage(timer, 2, out);\n        }\n        break;\n\n      case \"pwm\":\n        if (now >= rt.phase_until) {\n          if (rt.phase === \"a\") {\n            rt.phase = \"b\";\n            rt.phase_until = now + toMs(timer.t_cycle - timer.t_duty, timer.unit);\n            pushMessage(timer, 2, out);\n          } else {\n            rt.phase = \"a\";\n            rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n            pushMessage(timer, 1, out);\n          }\n        }\n        break;\n\n      case \"loop\":\n        if (now >= rt.next_time) {\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n          pushMessage(timer, 1, out);\n        }\n        break;\n\n      case \"counter\":\n        if (now >= rt.next_time && rt.count > 0) {\n          rt.count -= 1;\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n\n          if (timer.signal !== undefined && rt.count === timer.signal) {\n            pushMessage(timer, 2, out, runtime, key);\n          }\n\n          pushMessage(timer, 4, out, runtime, key);\n\n          if (rt.count === 0) {\n            rt.state = \"off\";\n            pushMessage(timer, 3, out, runtime, key);\n          }\n        }\n        break;\n    }\n  }\n}\n\n// --- CMD handling ---\nif (method === \"cmd\") {\n\n  // --- Special skip for day_counter ---\n  if (type === \"skip\" && target === \"day_counter\") {\n    if (!runtime[target]) runtime[target] = {};\n    const rt = runtime[target];\n\n    // day_counter'ı signal anına getir ve timerOn gibi başlat\n    timerOn(timers[target], rt, Date.now(), out, target, timers[target].signal);\n\n  } else if (timers[target]) {\n    if (!runtime[target]) runtime[target] = {};\n    if (type === \"on\") {\n      timerOn(timers[target], runtime[target], Date.now(), out, target);\n    } else if (type === \"off\") {\n      timerOff(timers[target], runtime[target], out, target);\n    }\n  } else if (target === \"all\" && type === \"off\") {\n    for (const [key, timer] of Object.entries(timers)) {\n      if (key === \"telemetry_periodical\") continue;\n      if (!runtime[key]) runtime[key] = {};\n      timerOff(timer, runtime[key], out, key, true);\n    }\n    out[1].push({\n      payload: { method: \"cmd\", params: { type: \"off\", target: \"all\" } }\n    });\n  } else {\n    out[1].push(msg);\n  }\n\n} else if (method === \"evt\" && type === \"timer_tick\") {\n  timerTick(timers, runtime, Date.now(), out);\n} else {\n  out[1].push(msg);\n}\n\ncontext.set(\"runtime\", runtime);\n\nreturn out.some(arr => arr.length) ? out : null;\n",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
@@ -518,15 +515,18 @@
         "wires": [
             [
                 "22442867c06e05b8",
-                "3bb33e35ca7ba828"
+                "3bb33e35ca7ba828",
+                "154074dafcf5bbbe"
             ],
             [
                 "69b69a40e08aa884",
-                "adaa33d4b02ad602"
+                "adaa33d4b02ad602",
+                "3db612a59529d8a0"
             ],
             [
                 "0b3654ab51cfd27c",
-                "5e13013435e3a5ac"
+                "5e13013435e3a5ac",
+                "1f0de96de4ba4da0"
             ]
         ]
     },
@@ -560,7 +560,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "fsm",
-        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.state;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.state = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(\"fsm\", { state: currentState });\n  }\n}\n\nfunction sendCmd(type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[0].push(msg);\n}\n\nfunction sendEvt(type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_ang\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"emergency_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n      if (runtime.humidity_detector_ang.val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (runtime.humidity_detector_ang.val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n      sendCmd(\"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(\"on\", \"fan_pwm\");\n      sendCmd(\"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(\"off\", \"all\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward_on\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return;\n      }\n\n    } else if (type === \"reverse_on\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return;\n      }\n    }\n    outputs[0].push(msg);\n\n  } else {\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.state;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.state = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(\"fsm\", { state: currentState });\n  }\n}\n\nfunction sendCmd(type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[0].push(msg);\n}\n\nfunction sendEvt(type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_ang\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"emergency_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n      if (runtime.humidity_detector_ang.val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (runtime.humidity_detector_ang.val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n      sendCmd(\"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(\"skip\", \"day_counter\");\n      sendCmd(\"on\", \"fan_pwm\");\n      sendCmd(\"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(\"off\", \"all\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward_on\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return;\n      }\n\n    } else if (type === \"reverse_on\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return;\n      }\n    }\n    outputs[0].push(msg);\n\n  } else {\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -571,10 +571,12 @@
         "y": 260,
         "wires": [
             [
-                "8701a07643f54a7b"
+                "8701a07643f54a7b",
+                "d261e8178f81ce8b"
             ],
             [
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "1672d44371b4c0b7"
             ]
         ]
     },
@@ -600,8 +602,7 @@
                 "22442867c06e05b8"
             ],
             [
-                "c3f4a0e8f8030852",
-                "d69529353dec1195"
+                "c3f4a0e8f8030852"
             ]
         ]
     },
@@ -1040,8 +1041,7 @@
         "y": 480,
         "wires": [
             [
-                "8701a07643f54a7b",
-                "a150fa8b3d74e98b"
+                "8701a07643f54a7b"
             ]
         ]
     },
@@ -1200,10 +1200,10 @@
         "wires": []
     },
     {
-        "id": "a150fa8b3d74e98b",
+        "id": "154074dafcf5bbbe",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "telemetry_periodical_cmd_on",
+        "name": "timer_manager 1",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -1212,23 +1212,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1060,
-        "y": 800,
-        "wires": []
-    },
-    {
-        "id": "154074dafcf5bbbe",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1300,
+        "x": 1330,
         "y": 680,
         "wires": []
     },
@@ -1236,15 +1220,16 @@
         "id": "3db612a59529d8a0",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "debug 2",
+        "name": "timer_manager 2",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1300,
+        "x": 1330,
         "y": 720,
         "wires": []
     },
@@ -1252,15 +1237,16 @@
         "id": "1f0de96de4ba4da0",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "debug 3",
+        "name": "timer_manager 3",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1300,
+        "x": 1330,
         "y": 760,
         "wires": []
     },
@@ -1268,7 +1254,7 @@
         "id": "0b3fdbbd33e55a6d",
         "type": "inject",
         "z": "2d8538969c77a5df",
-        "name": "restore-temp",
+        "name": "skip",
         "props": [
             {
                 "p": "payload"
@@ -1279,9 +1265,9 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"restore\", \"target\": \"all\"}}",
+        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"skip\", \"target\": \"day_counter\"}}",
         "payloadType": "json",
-        "x": 890,
+        "x": 870,
         "y": 360,
         "wires": [
             [
@@ -1290,19 +1276,37 @@
         ]
     },
     {
-        "id": "d69529353dec1195",
+        "id": "d261e8178f81ce8b",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "debug 4",
+        "name": "fsm 1",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1220,
-        "y": 140,
+        "x": 1330,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "1672d44371b4c0b7",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "fsm 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1330,
+        "y": 160,
         "wires": []
     }
 ]

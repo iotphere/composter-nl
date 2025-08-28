@@ -106,8 +106,24 @@ function timerOff(timer, rt, out, target, suppressMessages = false) {
         pushMessage(timer, 3, out, runtime, target);
         pushMessage(timer, 4, out, runtime, target);
       }
+
+      // day_counter için evt day 0 mesajı her koşulda
+      if (target === "day_counter") {
+        out[2].push({
+          payload: {
+            method: "evt",
+            params: { type: "day", val: 0 }
+          }
+        });
+      }
       break;
   }
+
+  // Genel reset: runtime içindeki yardımcı alanlar
+  rt.on_time = null;
+  rt.next_time = null;
+  rt.phase_until = null;
+  rt.phase = null;
 }
 
 function timerTick(timers, runtime, now, out) {
@@ -158,6 +174,22 @@ function timerTick(timers, runtime, now, out) {
           if (rt.count === 0) {
             rt.state = "off";
             pushMessage(timer, 3, out, runtime, key);
+
+            // Son kalan gün evt day 0 mesajı
+            if (key === "day_counter") {
+              out[2].push({
+                payload: {
+                  method: "evt",
+                  params: { type: "day", val: 0 }
+                }
+              });
+            }
+
+            // Reset runtime yardımcı alanlar
+            rt.on_time = null;
+            rt.next_time = null;
+            rt.phase_until = null;
+            rt.phase = null;
           }
         }
         break;
@@ -167,7 +199,6 @@ function timerTick(timers, runtime, now, out) {
 
 // --- CMD handling ---
 if (method === "cmd") {
-
   // --- Special skip for day_counter ---
   if (type === "skip" && target === "day_counter") {
     if (!runtime[target]) runtime[target] = {};

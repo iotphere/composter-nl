@@ -54,7 +54,7 @@
                     "channels": {
                         "oxygen": {
                             "map": 0,
-                            "change": 0.5,
+                            "change": 5,
                             "scale": {
                                 "in_min": 400,
                                 "in_max": 2000,
@@ -70,7 +70,7 @@
                         },
                         "humidity": {
                             "map": 1,
-                            "change": 0.5,
+                            "change": 3,
                             "scale": {
                                 "in_min": 400,
                                 "in_max": 2000,
@@ -330,7 +330,8 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day"
+                                "type": "day",
+                                "val": 21
                             },
                             "port": 3
                         }

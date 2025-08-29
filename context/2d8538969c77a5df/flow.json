@@ -331,7 +331,7 @@
                             "method": "evt",
                             "params": {
                                 "type": "day",
-                                "val": 21
+                                "val": 3
                             },
                             "port": 3
                         }
@@ -395,7 +395,7 @@
                 "val": "off"
             },
             "emergency_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "light": {
                 "val": "off"
@@ -449,7 +449,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "start"
+                "state": "end"
             }
         }
     }

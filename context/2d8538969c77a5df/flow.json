@@ -43,7 +43,7 @@
                         "cabinet_door": {
                             "map": 6
                         },
-                        "emergency_button": {
+                        "stop_button": {
                             "map": 15
                         }
                     }
@@ -114,7 +114,7 @@
                             "map": 6,
                             "group": "loader"
                         },
-                        "emergency_contactor": {
+                        "power_contactor": {
                             "map": 7
                         }
                     }
@@ -330,8 +330,7 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day",
-                                "val": 3
+                                "type": "day"
                             },
                             "port": 3
                         }
@@ -376,7 +375,7 @@
             "cabinet_door": {
                 "val": "off"
             },
-            "emergency_button": {
+            "stop_button": {
                 "val": "off"
             },
             "oxygen": {
@@ -394,7 +393,7 @@
             "loader_motor": {
                 "val": "off"
             },
-            "emergency_contactor": {
+            "power_contactor": {
                 "val": "off"
             },
             "light": {

@@ -21,7 +21,7 @@ const flowData = {
           roof_forward_limit: {map: 4},
           roof_reverse_limit: {map: 5},
           cabinet_door: {map: 6},
-          emergency_button: {map: 15}
+          stop_button: {map: 15}
         }      
       },
       analog_inputs: {
@@ -47,7 +47,7 @@ const flowData = {
           loader_forward_valve: {map: 4, group: "loader"},
           loader_reverse_valve: {map: 5, group: "loader"},
           loader_motor: {map: 6, group: "loader"},
-          emergency_contactor: {map: 7}
+          power_contactor: {map: 7}
         }
       }
     },
@@ -138,13 +138,13 @@ const flowData = {
     roof_forward_limit: {val: "on"},
     roof_reverse_limit: {val: "on"},
     cabinet_door: {val: "off"},
-    emergency_button: {val: "off"},
+    stop_button: {val: "off"},
     oxygen: {val: 0},
     humidity: {val: 0}, 
     loader_forward_valve: {val: "off"},
     loader_reverse_valve: {val: "off"},
     loader_motor: {val: "off"},
-    emergency_contactor: {val: "off"},
+    power_contactor: {val: "off"},
     light: {val: "off"},
     buzzer: {val: "off"},  
     roof: {speed: {set_point: 100}, val: "off"},

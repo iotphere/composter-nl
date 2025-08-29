@@ -76,7 +76,7 @@ if (method === "evt") {
   } else if (type === "cabinet_door") {
     // boş
 
-  } else if (type === "emergency_button") {
+  } else if (type === "stop_button") {
     // boş
   }
 

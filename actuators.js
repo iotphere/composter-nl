@@ -67,14 +67,14 @@ function processQueue() {
 function doAllOff() {
   currentArray1 = Array(8).fill(false);
   currentArray2 = Array(8).fill(false);
-  const emBit = relayChannels2.emergency_contactor?.map;
-  if (emBit !== undefined) currentArray2[emBit] = runtime.emergency_contactor?.val === "on";
+  const emBit = relayChannels2.power_contactor?.map;
+  if (emBit !== undefined) currentArray2[emBit] = runtime.power_contactor?.val === "on";
 
   context.set("last_write_array_1", currentArray1);
   context.set("last_write_array_2", currentArray2);
 
   for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {
-    if (name === "emergency_contactor") continue;
+    if (name === "power_contactor") continue;
     if (runtime[name]) {
       runtime[name].val = "off";
       evtMsgs.push({ payload: { method: "evt", params: { type: name, val: "off" } } });
@@ -111,11 +111,11 @@ function doAllOff() {
 
 // === Restore ===
 if (type === "restore" && target === "all") {
-  evtMsgs.push({ payload: { method: "evt", params: { type: "emergency_contactor", val: "on" } } });
-  const emRelay = getRelayInfo("emergency_contactor");
+  evtMsgs.push({ payload: { method: "evt", params: { type: "power_contactor", val: "on" } } });
+  const emRelay = getRelayInfo("power_contactor");
   if (emRelay) {
     emRelay.array[emRelay.bit] = true;
-    runtime.emergency_contactor = { val: "on" };   // eksik olan eklendi
+    runtime.power_contactor = { val: "on" };   // eksik olan eklendi
     relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));
   }
   enqueueAll();

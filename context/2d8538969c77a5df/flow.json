@@ -330,7 +330,8 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day"
+                                "type": "day",
+                                "val": 21
                             },
                             "port": 3
                         }
@@ -448,7 +449,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "end"
+                "state": "start"
             }
         }
     }

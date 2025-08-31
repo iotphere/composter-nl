@@ -105,7 +105,8 @@ if (method === "evt") {
       transition("dry");
 
     } else if (type === "end") {
-      sendCmd("off", "all");
+      sendCmd("off", "timers");
+      sendCmd("off", "actuators");
       transition("end");
     }
 
@@ -120,9 +121,9 @@ if (method === "evt") {
       if (runtime.roof_reverse_limit.val === "off") {
         return;
       }
-    }
-    outputs[0].push(msg);
-
+    } else if (type === "off") {
+      sendCmd("off", "roof");
+    } 
   } else {
     outputs[0].push(msg);
   }

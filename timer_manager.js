@@ -214,15 +214,12 @@ if (method === "cmd") {
     } else if (type === "off") {
       timerOff(timers[target], runtime[target], out, target);
     }
-  } else if (target === "all" && type === "off") {
+  } else if (type === "off" && target === "timers") {
     for (const [key, timer] of Object.entries(timers)) {
       if (key === "telemetry_periodical") continue;
       if (!runtime[key]) runtime[key] = {};
       timerOff(timer, runtime[key], out, key, true);
     }
-    out[1].push({
-      payload: { method: "cmd", params: { type: "off", target: "all" } }
-    });
   } else {
     out[1].push(msg);
   }

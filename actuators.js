@@ -35,13 +35,13 @@ const relayMsgs = [];
 const sinamicsMsgs = [];
 const evtMsgs = [];
 
-function enqueueAll() {
+function enqueueMsgs() {
   let sendQueue = context.get("sendQueue") || [];
-  const allMsgs = [];
-  relayMsgs.forEach(m => allMsgs.push([0, m]));
-  sinamicsMsgs.forEach(m => allMsgs.push([1, m]));
-  evtMsgs.forEach(m => allMsgs.push([2, m]));
-  sendQueue.push(...allMsgs);
+  const queuedMsgs = [];
+  relayMsgs.forEach(m => queuedMsgs.push([0, m]));
+  sinamicsMsgs.forEach(m => queuedMsgs.push([1, m]));
+  evtMsgs.forEach(m => queuedMsgs.push([2, m]));
+  sendQueue.push(...queuedMsgs);
   context.set("sendQueue", sendQueue);
   if (!context.get("isSending")) processQueue();
 }
@@ -64,7 +64,7 @@ function processQueue() {
 }
 
 // === Toplu OFF ===
-function doAllOff() {
+function doActuatorsOff() {
   currentArray1 = Array(8).fill(false);
   currentArray2 = Array(8).fill(false);
   const emBit = relayChannels2.power_contactor?.map;
@@ -106,11 +106,11 @@ function doAllOff() {
 
   relayMsgs.push(createRelayMsg(currentArray1, unitid1, "last_write_array_1"));
   relayMsgs.push(createRelayMsg(currentArray2, unitid2, "last_write_array_2"));
-  enqueueAll();
+  enqueueMsgs();
 }
 
 // === Restore ===
-if (type === "restore" && target === "all") {
+if (type === "on" && target === "power") {
   evtMsgs.push({ payload: { method: "evt", params: { type: "power_contactor", val: "on" } } });
   const emRelay = getRelayInfo("power_contactor");
   if (emRelay) {
@@ -118,10 +118,27 @@ if (type === "restore" && target === "all") {
     runtime.power_contactor = { val: "on" };   // eksik olan eklendi
     relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));
   }
-  enqueueAll();
-  setTimeout(doAllOff, 10000);
-} else if (type === "off" && target === "all") {
-  doAllOff();
+  enqueueMsgs();
+  setTimeout(doActuatorsOff, 10000);
+
+} else if (type === "off" && target === "power") {
+  // 1. önce tüm aktüatörler kapat
+  doActuatorsOff();
+
+  // 2. sonra 1 sn bekleyip power_contactor kapat
+  setTimeout(() => {
+    const emRelay = getRelayInfo("power_contactor");
+    if (emRelay) {
+      emRelay.array[emRelay.bit] = false;                 // röle array güncelle
+      runtime.power_contactor = { val: "off" };           // runtime güncelle
+      evtMsgs.push({ payload: { method: "evt", params: { type: "power_contactor", val: "off" } } });
+      relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));  // modbus yazma
+      enqueueMsgs();  // kuyruk çalıştır
+    }
+  }, 1000);
+
+} else if (type === "off" && target === "actuators") {
+  doActuatorsOff();
 } else {
   const sinamics = config.sinamics?.channels?.[target];
   if (sinamics) {
@@ -144,7 +161,7 @@ if (type === "restore" && target === "all") {
       runtime[target].speed.set_point = set_point;
     }
     evtMsgs.push({ payload: { method: "evt", params: { type: target, val: runtime[target].val, speed: runtime[target].speed ? { set_point: runtime[target].speed.set_point } : undefined } } });
-    enqueueAll();
+    enqueueMsgs();
   } else {
     if (["on", "off"].includes(type)) {
       const relay = getRelayInfo(target);
@@ -186,7 +203,7 @@ if (type === "restore" && target === "all") {
 
     relayMsgs.push(createRelayMsg(currentArray1, unitid1, "last_write_array_1"));
     relayMsgs.push(createRelayMsg(currentArray2, unitid2, "last_write_array_2"));
-    enqueueAll();
+    enqueueMsgs();
   }
 }
 

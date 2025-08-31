@@ -12,53 +12,35 @@ if (typeof key !== "string" || (val !== "on" && val !== "off")) return null;
 const digitalDef = digitalChannels[key];
 if (!digitalDef || !digitalDef.pro) return null;
 
-// Ortak alarm anahtarı (pro objesindeki ilk key)
-const commonAlarmKeys = Object.keys(digitalDef.pro);
-if (commonAlarmKeys.length === 0) return null;
-const commonAlarmKey = commonAlarmKeys[0];
+// pro objesindeki tek ortak anahtar
+const commonAlarmKey = Object.keys(digitalDef.pro)[0];
+const expectedVal = digitalDef.pro[commonAlarmKey];
 
-// Bireysel girişlerin runtime güncellemesi ve mesaj çıkışı yok (diger nod yapıyor)
+if (!commonAlarmKey) return null;
 
-// Şimdi aynı ortak alarm anahtarına sahip tüm kanalları bulalım
-const relatedKeys = [];
-for (const [chanKey, chanDef] of Object.entries(digitalChannels)) {
-  if (chanDef.pro && Object.keys(chanDef.pro).includes(commonAlarmKey)) {
-    relatedKeys.push(chanKey);
-  }
+const currentVal = runtime[commonAlarmKey]?.val;
+let newVal = null;
+
+// Kural 1: pro[key] === "off" ve runtime === "on" → "off"
+if (expectedVal === "off" && currentVal === "on") {
+    newVal = "off";
 }
 
-// runtime’dan bu ilgili kanalların değerlerini al
-// Burada beklenen pro objesi tek bir key-value, örn {oxygen_detector_dig: "off"} ya da {"on"}
-// bu yüzden değerlerine göre karar veriyoruz
-
-let newCommonVal = runtime[commonAlarmKey]?.val ?? "off";
-
-const offExists = relatedKeys.some(k => {
-  return digitalChannels[k].pro[commonAlarmKey] === "off" && runtime[k]?.val === "off";
-});
-
-const onExists = relatedKeys.some(k => {
-  return digitalChannels[k].pro[commonAlarmKey] === "on" && runtime[k]?.val === "on";
-});
-
-// Hysteresis kuralı
-if (offExists) {
-  newCommonVal = "off";
-} else if (onExists) {
-  newCommonVal = "on";
+// Kural 2: pro[key] === "on" ve runtime === "off" → "on"
+if (expectedVal === "on" && currentVal === "off") {
+    newVal = "on";
 }
 
-// Eğer değiştiyse runtime güncelle ve mesaj üret
-if (newCommonVal !== runtime[commonAlarmKey]?.val) {
-  runtime[commonAlarmKey].val = newCommonVal;
-  flow.set("flow", flowData);
+// Eğer bir değişim yoksa çık
+if (!newVal) return null;
 
-  return [[{
+// Runtime güncelle ve mesaj gönder
+runtime[commonAlarmKey].val = newVal;
+flow.set("flow", flowData);
+
+return [[{
     payload: {
-      method: "evt",
-      params: { type: commonAlarmKey, val: newCommonVal },
-    },
-  }]];
-}
-
-return null;
+        method: "evt",
+        params: { type: commonAlarmKey, val: newVal }
+    }
+}]];

@@ -1,6 +1,6 @@
 const flowData = flow.get("flow");
+const energyChannels = flowData.config.energy_meter.channels;
 const runtime = flowData.runtime;
-const channels = flowData.config.energy_meter.channels;
 
 const m = msg.payload;
 if (typeof m !== "object") return null;
@@ -9,25 +9,28 @@ const key = m.params?.type;
 const val = m.params?.val;
 if (typeof key !== "string" || typeof val !== "number") return null;
 
-const chDef = channels[key];
-if (!chDef || !chDef.pro) return null;
+const channelDef = energyChannels[key];
+if (!channelDef || !channelDef.pro) return null;
 
 const changed = [];
 
-for (const [detectorKey, thresholds] of Object.entries(chDef.pro)) {
+for (const [detectorKey, thresholds] of Object.entries(channelDef.pro)) {
     if (!thresholds || typeof thresholds.on !== "number" || typeof thresholds.off !== "number") continue;
 
-    // runtime'da başlatılmamışsa başlat
-    if (!runtime[detectorKey]) runtime[detectorKey] = { val: "off" };
-    const prevVal = runtime[detectorKey].val;
+    const prevVal = runtime[detectorKey]?.val ?? "off";
+    let newVal = null;
 
-    // Minimal değişim mantığı: sadece eşik geçildiğinde tersine çevir
-    let newVal = prevVal;
-    if (prevVal === "off" && val >= thresholds.on) newVal = "on";
-    else if (prevVal === "on" && val <= thresholds.off) newVal = "off";
+    // Kural 1: runtime off + val >= on → on
+    if (prevVal === "off" && val >= thresholds.on) {
+        newVal = "on";
+    }
+    // Kural 2: runtime on + val <= off → off
+    else if (prevVal === "on" && val <= thresholds.off) {
+        newVal = "off";
+    }
 
-    if (newVal !== prevVal) {
-        runtime[detectorKey].val = newVal;
+    if (newVal && newVal !== prevVal) {
+        runtime[detectorKey] = { val: newVal };
         flow.set("flow", flowData);
 
         changed.push({

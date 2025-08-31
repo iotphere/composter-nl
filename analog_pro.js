@@ -9,23 +9,28 @@ const key = m.params?.type;
 const val = m.params?.val;
 if (typeof key !== "string" || typeof val !== "number") return null;
 
-const analogDef = analogChannels[key];
-if (!analogDef || !analogDef.pro) return null;
+const channelDef = analogChannels[key];
+if (!channelDef || !channelDef.pro) return null;
 
 const changed = [];
 
-for (const [detectorKey, thresholds] of Object.entries(analogDef.pro)) {
+for (const [detectorKey, thresholds] of Object.entries(channelDef.pro)) {
     if (!thresholds || typeof thresholds.on !== "number" || typeof thresholds.off !== "number") continue;
 
     const prevVal = runtime[detectorKey]?.val ?? "off";
+    let newVal = null;
 
-    // Minimal değişim mantığı: sadece eşik geçildiğinde tersine çevir
-    let newVal = prevVal;
-    if (prevVal === "off" && val >= thresholds.on) newVal = "on";
-    else if (prevVal === "on" && val <= thresholds.off) newVal = "off";
+    // Kural 1: runtime off + val >= on → on
+    if (prevVal === "off" && val >= thresholds.on) {
+        newVal = "on";
+    }
+    // Kural 2: runtime on + val <= off → off
+    else if (prevVal === "on" && val <= thresholds.off) {
+        newVal = "off";
+    }
 
-    if (newVal !== prevVal) {
-        runtime[detectorKey].val = newVal;
+    if (newVal && newVal !== prevVal) {
+        runtime[detectorKey] = { val: newVal };
         flow.set("flow", flowData);
 
         changed.push({

@@ -9,38 +9,30 @@ const key = m.params?.type;
 const val = m.params?.val;
 if (typeof key !== "string" || (val !== "on" && val !== "off")) return null;
 
-const digitalDef = digitalChannels[key];
-if (!digitalDef || !digitalDef.pro) return null;
+const channelDef = digitalChannels[key];
+if (!channelDef || !channelDef.pro) return null;
 
-// pro objesindeki tek ortak anahtar
-const commonAlarmKey = Object.keys(digitalDef.pro)[0];
-const expectedVal = digitalDef.pro[commonAlarmKey];
+// Ortak alarm anahtarı
+const [commonKey] = Object.keys(channelDef.pro);
+const expectedVal = channelDef.pro[commonKey];
+if (!commonKey) return null;
 
-if (!commonAlarmKey) return null;
-
-const currentVal = runtime[commonAlarmKey]?.val;
+// Sadece iki kural
 let newVal = null;
-
-// Kural 1: pro[key] === "off" ve runtime === "on" → "off"
-if (expectedVal === "off" && currentVal === "on") {
+if (val === "on" && expectedVal === "off" && runtime[commonKey].val === "on") {
     newVal = "off";
-}
-
-// Kural 2: pro[key] === "on" ve runtime === "off" → "on"
-if (expectedVal === "on" && currentVal === "off") {
+} else if (val === "off" && expectedVal === "on" && runtime[commonKey].val === "off") {
     newVal = "on";
 }
 
-// Eğer bir değişim yoksa çık
 if (!newVal) return null;
 
-// Runtime güncelle ve mesaj gönder
-runtime[commonAlarmKey].val = newVal;
+runtime[commonKey].val = newVal;
 flow.set("flow", flowData);
 
 return [[{
     payload: {
         method: "evt",
-        params: { type: commonAlarmKey, val: newVal }
+        params: { type: commonKey, val: newVal }
     }
 }]];

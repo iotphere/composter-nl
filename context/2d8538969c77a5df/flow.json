@@ -449,7 +449,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "start"
+                "state": "end"
             }
         }
     }

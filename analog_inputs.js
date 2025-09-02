@@ -14,10 +14,14 @@ for (const [key, def] of Object.entries(channels)) {
     const raw = rawVals[index];
     if (typeof raw !== "number") continue;
 
-    let scaled = raw;
+    // factor varsa uygula
+    const factor = (typeof def.factor === "number") ? def.factor : 1;
+    const rawEff = raw * factor;
+
+    let scaled = rawEff;
     if (def.scale) {
         const { in_min, in_max, out_min, out_max } = def.scale;
-        scaled = ((raw - in_min) / (in_max - in_min)) * (out_max - out_min) + out_min;
+        scaled = ((rawEff - in_min) / (in_max - in_min)) * (out_max - out_min) + out_min;
     }
     scaled = parseFloat(scaled.toFixed(3));
 

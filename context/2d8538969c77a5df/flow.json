@@ -54,26 +54,28 @@
                     "channels": {
                         "oxygen": {
                             "map": 0,
-                            "change": 5,
+                            "change": 0.2,
+                            "factor": 0.01,
                             "scale": {
-                                "in_min": 400,
-                                "in_max": 2000,
-                                "out_min": 0,
-                                "out_max": 100
+                                "in_min": 4,
+                                "in_max": 20,
+                                "out_min": 0.5,
+                                "out_max": 20.9
                             },
                             "pro": {
                                 "oxygen_detector_ang": {
-                                    "off": 30,
-                                    "on": 60
+                                    "off": 3.2,
+                                    "on": 14.7
                                 }
                             }
                         },
                         "humidity": {
                             "map": 1,
                             "change": 3,
+                            "factor": 0.01,
                             "scale": {
-                                "in_min": 400,
-                                "in_max": 2000,
+                                "in_min": 4,
+                                "in_max": 20,
                                 "out_min": 0,
                                 "out_max": 100
                             },
@@ -330,8 +332,7 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day",
-                                "val": 21
+                                "type": "day"
                             },
                             "port": 3
                         }

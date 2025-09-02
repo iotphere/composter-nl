@@ -54,8 +54,8 @@
         },
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1756707919399,
-            "next_time": 1756716320008
+            "on_time": 1756831450475,
+            "next_time": 1756831930497
         },
         "day": {
             "val": 21

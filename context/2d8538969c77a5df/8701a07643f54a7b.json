@@ -1,5 +1,10 @@
 {
     "runtime": {
+        "telemetry_periodical": {
+            "state": "on",
+            "on_time": 1757274686028,
+            "next_time": 1757278646310
+        },
         "fan_pwm": {
             "state": "off",
             "on_time": null,
@@ -26,16 +31,16 @@
             "state": "off",
             "done": true,
             "on_time": null,
-            "phase_until": null,
             "next_time": null,
+            "phase_until": null,
             "phase": null
         },
         "light_pwm": {
             "state": "off",
             "phase": null,
             "on_time": null,
-            "phase_until": null,
-            "next_time": null
+            "next_time": null,
+            "phase_until": null
         },
         "buzzer_pulse": {
             "state": "off",
@@ -51,14 +56,6 @@
             "on_time": null,
             "next_time": null,
             "phase_until": null
-        },
-        "telemetry_periodical": {
-            "state": "on",
-            "on_time": 1757236889888,
-            "next_time": 1757237489920
-        },
-        "day": {
-            "val": 21
         }
     }
 }

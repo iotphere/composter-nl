@@ -332,7 +332,8 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day"
+                                "type": "day",
+                                "val": 21
                             },
                             "port": 3
                         }
@@ -396,7 +397,7 @@
                 "val": "off"
             },
             "power_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "light": {
                 "val": "off"

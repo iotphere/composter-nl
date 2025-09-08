@@ -196,7 +196,8 @@
             [
                 "22442867c06e05b8",
                 "0b3654ab51cfd27c",
-                "2b810660372548f4"
+                "2b810660372548f4",
+                "1fdf1ec66afd9b22"
             ]
         ]
     },
@@ -216,7 +217,8 @@
         "y": 240,
         "wires": [
             [
-                "54a9a79a7c485b62"
+                "54a9a79a7c485b62",
+                "89af02b1bc8fde6a"
             ]
         ]
     },
@@ -436,7 +438,8 @@
         "y": 60,
         "wires": [
             [
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "f1a672c83645300a"
             ]
         ]
     },
@@ -473,7 +476,9 @@
         "x": 350,
         "y": 60,
         "wires": [
-            []
+            [
+                "beb4346081038e85"
+            ]
         ]
     },
     {
@@ -517,13 +522,16 @@
         "y": 440,
         "wires": [
             [
-                "22442867c06e05b8"
+                "22442867c06e05b8",
+                "664d95256e2c36ad"
             ],
             [
-                "69b69a40e08aa884"
+                "69b69a40e08aa884",
+                "eabb49f6ea664cdf"
             ],
             [
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "9185b5217ebdc209"
             ]
         ]
     },
@@ -568,10 +576,12 @@
         "y": 260,
         "wires": [
             [
-                "8701a07643f54a7b"
+                "8701a07643f54a7b",
+                "c191c7397b21bd4f"
             ],
             [
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "abbeb7f879dce340"
             ]
         ]
     },
@@ -591,13 +601,16 @@
         "y": 60,
         "wires": [
             [
-                "b7b87a40dd91a021"
+                "b7b87a40dd91a021",
+                "4374c2d006a762aa"
             ],
             [
-                "22442867c06e05b8"
+                "22442867c06e05b8",
+                "6dcda7c82fb9d78e"
             ],
             [
-                "c3f4a0e8f8030852"
+                "c3f4a0e8f8030852",
+                "67f93eb4cc3f69b4"
             ]
         ]
     },
@@ -618,7 +631,8 @@
         "wires": [
             [
                 "22442867c06e05b8",
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "e6b1b4baeb9ea6aa"
             ]
         ]
     },
@@ -660,7 +674,8 @@
         "y": 200,
         "wires": [
             [
-                "22442867c06e05b8"
+                "22442867c06e05b8",
+                "0361884ba2bf6086"
             ]
         ]
     },
@@ -753,8 +768,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 980,
-        "y": 600,
+        "x": 1200,
+        "y": 660,
         "wires": []
     },
     {
@@ -770,8 +785,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 980,
-        "y": 640,
+        "x": 1200,
+        "y": 700,
         "wires": []
     },
     {
@@ -787,8 +802,246 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 980,
-        "y": 680,
+        "x": 1200,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "1fdf1ec66afd9b22",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "digital_inputs_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 550,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "0361884ba2bf6086",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "digital_pro_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "89af02b1bc8fde6a",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "analog_inputs_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 550,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "e6b1b4baeb9ea6aa",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "analog_pro_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f1a672c83645300a",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "mqtt_in_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 310,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "beb4346081038e85",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "flow_context_x",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 110,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "4374c2d006a762aa",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "mqtt_manager_1",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 330,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "6dcda7c82fb9d78e",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "mqtt_manager_2",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 330,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "67f93eb4cc3f69b4",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "mqtt_manager_3",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 330,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "c191c7397b21bd4f",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "fsm_1",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 740,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "664d95256e2c36ad",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "timer_manager_1",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "eabb49f6ea664cdf",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "timer_manager_2",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "9185b5217ebdc209",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "timer_manager_3",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "abbeb7f879dce340",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "fsm_2",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 740,
+        "y": 700,
         "wires": []
     }
 ]

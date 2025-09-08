@@ -415,7 +415,7 @@
                 "speed": {
                     "set_point": 100
                 },
-                "val": "off"
+                "val": "forward_on"
             },
             "water_pump": {
                 "speed": {

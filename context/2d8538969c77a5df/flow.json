@@ -451,7 +451,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "end"
+                "state": "start"
             }
         }
     }

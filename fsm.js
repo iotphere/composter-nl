@@ -116,14 +116,14 @@ if (method === "evt") {
       if (runtime.roof_forward_limit.val === "off") {
         return;
       }
-
     } else if (type === "reverse_on") {
       if (runtime.roof_reverse_limit.val === "off") {
         return;
       }
-    } else if (type === "off") {
-      sendCmd("off", "roof");
+    } else {
+      outputs[0].push(msg);
     } 
+    
   } else {
     outputs[0].push(msg);
   }

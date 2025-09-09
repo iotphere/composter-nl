@@ -120,9 +120,8 @@ if (method === "evt") {
       if (runtime.roof_reverse_limit.val === "off") {
         return;
       }
-    } else {
-      outputs[0].push(msg);
-    } 
+    }
+    outputs[0].push(msg);     
     
   } else {
     outputs[0].push(msg);

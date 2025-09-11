@@ -124,7 +124,7 @@
             },
             "energy_meter": {
                 "config_node": "204_9600_tcp_rtu_ang_inp_eng_met",
-                "unitid": 1,
+                "unitid": 2,
                 "channels": {
                     "kwh": {
                         "map": 0,
@@ -332,8 +332,7 @@
                         "4": {
                             "method": "evt",
                             "params": {
-                                "type": "day",
-                                "val": 21
+                                "type": "day"
                             },
                             "port": 3
                         }
@@ -451,7 +450,7 @@
                 "val": "off"
             },
             "fsm": {
-                "state": "start"
+                "val": "end"
             }
         }
     }

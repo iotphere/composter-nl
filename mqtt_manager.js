@@ -9,7 +9,7 @@ const params = payload?.params || {};
 
 const flowData = flow.get("flow") || {};
 
-// Güvenli msgId (topic beklenen formatta değilse 'unknown' kullan)
+// Güvenli msgId
 const msgId = (topic.split("/").pop()) || "unknown";
 
 function getValueAtPath(obj, path) {
@@ -46,36 +46,30 @@ function buildTelemetryMsg(content) {
     };
 }
 
-// 1) evt
+// 1) EVT — esnek versiyon
 if (method === "evt") {
     const subType = params?.type;
 
+    // subtype = telemetry_periodical → flowData.runtime
     if (subType === "telemetry_periodical") {
         return [buildTelemetryMsg(flowData.runtime || {}), null, null];
-    } 
-    else if (subType === "fsm") {
-        const formatted = { fsm: { state: params.state } };
+    }
+
+    // Geri kalan tüm evt’ler için esnek format:
+    // params.type dışındaki her şeyi otomatik kapsar
+    if (subType) {
+        // type dışındaki tüm alanları bir objeye kopyala
+        const { type, ...rest } = params;
+        // örn. { motor1: {x:10,y:20,speed:100}} gibi
+        const formatted = { [subType]: rest };
         return [buildTelemetryMsg(formatted), null, null];
     }
-    else {
-        const key = params?.type;
 
-        if (params?.val !== undefined && params?.speed !== undefined) {
-            const formatted = { [key]: { val: params.val, speed: params.speed } };
-            return [buildTelemetryMsg(formatted), null, null];
-        } else if (params?.val !== undefined) {
-            const formatted = { [key]: { val: params.val } };
-            return [buildTelemetryMsg(formatted), null, null];
-        } else if (params?.speed !== undefined) {
-            const formatted = { [key]: { speed: params.speed } };
-            return [buildTelemetryMsg(formatted), null, null];
-        }
-
-        return [null, null, null];
-    }
+    // params.type yoksa: params doğrudan telemetry payload olarak gönderilir
+    return [buildTelemetryMsg(params), null, null];
 }
 
-// 2) cmd
+// 2) CMD
 if (method === "cmd") {
     // Özel "inject → flow_context" komutu kontrolü
     if (params?.type === "inject" && params?.target === "flow_context") {

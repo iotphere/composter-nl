@@ -1,6 +1,6 @@
 const flowData = flow.get("flow");
 const runtime = flowData.runtime;
-let currentState = runtime.fsm.state;
+let currentState = runtime.fsm.val;
 
 const payload = msg.payload;
 if (!payload || typeof payload !== "object") return null;
@@ -16,9 +16,9 @@ const outputs = [[], []];
 function transition(toState) {
   if (toState !== currentState) {
     currentState = toState;
-    flowData.runtime.fsm.state = currentState;
+    flowData.runtime.fsm.val = currentState;
     flow.set("flow", flowData);
-    sendEvt("fsm", { state: currentState });
+    sendEvt("fsm", { val: currentState });
   }
 }
 

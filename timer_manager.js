@@ -73,7 +73,9 @@ function timerOn(timer, rt, now, out, target, forcedCount = null) {
       const entry4 = timer.pass?.[4];
       if (entry4) {
         entry4.params = entry4.params || {};
-        entry4.params.val = rt.count;
+        // ÖNEMLİ: sabit değer atamak yerine val özelliğini sil
+        // böylece pushMessage her seferinde runtime[target].count koyar
+        delete entry4.params.val;
       }
 
       pushMessage(timer, 1, out, runtime, target);

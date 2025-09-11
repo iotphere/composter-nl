@@ -53,7 +53,7 @@ const flowData = {
     },
     energy_meter: {
       config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
-      unitid: 1,      
+      unitid: 2,      
       channels: {
         kwh: {map: 0, factor: 0.01, change: 2, pro: {kwh_detector: {off: 30, on: 60}}}
       }
@@ -158,7 +158,7 @@ const flowData = {
     humidity_detector_dig: {val: "off"},
     humidity_detector_ang: {val: "off"},
     kwh_detector: {val: "off"},
-    fsm: {state: "end"}
+    fsm: {val: "end"}
   }
 }
 

@@ -2,8 +2,8 @@
     "runtime": {
         "telemetry_periodical": {
             "state": "on",
-            "on_time": 1757836629366,
-            "next_time": 1757838189461
+            "on_time": 1757853788746,
+            "next_time": 1757853908746
         },
         "fan_pwm": {
             "state": "off",

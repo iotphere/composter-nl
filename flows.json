@@ -171,8 +171,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "10",
-        "x": 1270,
-        "y": 540,
+        "x": 1310,
+        "y": 380,
         "wires": [
             [],
             []
@@ -191,7 +191,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 160,
+        "y": 240,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -214,7 +214,7 @@
         "finalize": "",
         "libs": [],
         "x": 600,
-        "y": 240,
+        "y": 320,
         "wires": [
             [
                 "54a9a79a7c485b62",
@@ -236,7 +236,7 @@
         "finalize": "",
         "libs": [],
         "x": 600,
-        "y": 320,
+        "y": 400,
         "wires": [
             [
                 "8b647d54a390a264"
@@ -261,7 +261,7 @@
         "delayOnStart": false,
         "startDelayTime": "",
         "x": 370,
-        "y": 160,
+        "y": 240,
         "wires": [
             [
                 "ecf66dea2db91aea"
@@ -287,7 +287,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 11, \"address\": 144 , \"quantity\": 1}",
         "payloadType": "json",
         "x": 130,
-        "y": 160,
+        "y": 240,
         "wires": [
             [
                 "8d59f82c1f6e0d51"
@@ -312,7 +312,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 12, \"address\": 160 , \"quantity\": 8}",
         "payloadType": "json",
         "x": 140,
-        "y": 220,
+        "y": 300,
         "wires": [
             [
                 "890e808611421ece"
@@ -338,7 +338,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 2, \"address\": 29 , \"quantity\": 2}",
         "payloadType": "json",
         "x": 130,
-        "y": 320,
+        "y": 400,
         "wires": [
             [
                 "6f4e90bab79df245"
@@ -364,7 +364,7 @@
         "delayOnStart": false,
         "startDelayTime": "",
         "x": 370,
-        "y": 320,
+        "y": 400,
         "wires": [
             [
                 "1b7f0d4c81a3700c"
@@ -385,40 +385,11 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "",
-        "x": 1260,
-        "y": 600,
+        "x": 1300,
+        "y": 440,
         "wires": [
             [],
             []
-        ]
-    },
-    {
-        "id": "69b69a40e08aa884",
-        "type": "function",
-        "z": "2d8538969c77a5df",
-        "name": "actuators",
-        "func": "const flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst relayChannels1 = config.io.relay_outputs_1.channels || {};\nconst relayChannels2 = config.io.relay_outputs_2.channels || {};\nconst unitid1 = config.io.relay_outputs_1.unitid;\nconst unitid2 = config.io.relay_outputs_2.unitid;\n\nlet currentArray1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet currentArray2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\nfunction getRelayInfo(name) {\n  if (relayChannels1?.[name]) return { array: currentArray1, bit: relayChannels1[name].map, unitid: unitid1, arrayName: \"last_write_array_1\" };\n  if (relayChannels2?.[name]) return { array: currentArray2, bit: relayChannels2[name].map, unitid: unitid2, arrayName: \"last_write_array_2\" };\n  return null;\n}\n\nfunction createRelayMsg(array, unitid, arrayName) {\n  let word = 0;\n  for (let i = 0; i < 8; i++) {\n    if (array[i]) word |= (1 << i);\n  }\n  context.set(arrayName, array);\n  return { payload: { value: word, fc: 6, unitid, address: 128, quantity: 1 } };\n}\n\nconst relayMsgs = [];\nconst sinamicsMsgs = [];\nconst evtMsgs = [];\n\nfunction enqueueMsgs() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  const queuedMsgs = [];\n  relayMsgs.forEach(m => queuedMsgs.push([0, m]));\n  sinamicsMsgs.forEach(m => queuedMsgs.push([1, m]));\n  evtMsgs.forEach(m => queuedMsgs.push([2, m]));\n  sendQueue.push(...queuedMsgs);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n  const [portIndex, msgObj] = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n  node.send([\n    portIndex === 0 ? msgObj : null,\n    portIndex === 1 ? msgObj : null,\n    portIndex === 2 ? msgObj : null\n  ]);\n  setTimeout(processQueue, 50);\n}\n\n// === Toplu OFF ===\nfunction doActuatorsOff() {\n  currentArray1 = Array(8).fill(false);\n  currentArray2 = Array(8).fill(false);\n  const emBit = relayChannels2.power_contactor?.map;\n  if (emBit !== undefined) currentArray2[emBit] = runtime.power_contactor?.val === \"on\";\n\n  context.set(\"last_write_array_1\", currentArray1);\n  context.set(\"last_write_array_2\", currentArray2);\n\n  for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {\n    if (name === \"power_contactor\") continue;\n    if (runtime[name]) {\n      runtime[name].val = \"off\";\n      evtMsgs.push({ payload: { method: \"evt\", params: { type: name, val: \"off\" } } });\n    }\n  }\n\n  // Loader OFF\n  const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n    .filter(([_, val]) => val.group === \"loader\")\n    .map(([key]) => key);\n  loaderKeys.forEach(key => {\n    const r = getRelayInfo(key);\n    if (r) r.array[r.bit] = false;\n  });\n  runtime.loader = { val: \"off\" };\n  evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: \"off\" } } });\n\n  // SINAMICS OFF\n  for (const [name, sin] of Object.entries(config.sinamics?.channels || {})) {\n    sinamicsMsgs.push({ payload: { value: config.sinamics.command_words.off, fc: 6, unitid: sin.unitid, address: 99, quantity: 1 } });\n    if (!runtime[name]) runtime[name] = {};\n    runtime[name].val = \"off\";\n    if (runtime[name].speed?.set_point) {\n      const value = Math.round(runtime[name].speed.set_point / 100 * config.sinamics.speed_max);\n      sinamicsMsgs.push({ payload: { value, fc: 6, unitid: sin.unitid, address: 100, quantity: 1 } });\n    }\n    evtMsgs.push({ payload: { method: \"evt\", params: { type: name, val: runtime[name].val, speed: runtime[name].speed ? { set_point: runtime[name].speed.set_point } : undefined } } });\n  }\n\n  relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n  relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n  enqueueMsgs();\n}\n\n// === Restore ===\nif (type === \"on\" && target === \"power\") {\n  evtMsgs.push({ payload: { method: \"evt\", params: { type: \"power_contactor\", val: \"on\" } } });\n  const emRelay = getRelayInfo(\"power_contactor\");\n  if (emRelay) {\n    emRelay.array[emRelay.bit] = true;\n    runtime.power_contactor = { val: \"on\" };   // eksik olan eklendi\n    relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));\n  }\n  enqueueMsgs();\n  setTimeout(doActuatorsOff, 10000);\n\n} else if (type === \"off\" && target === \"power\") {\n  // 1. önce tüm aktüatörler kapat\n  doActuatorsOff();\n\n  // 2. sonra 1 sn bekleyip power_contactor kapat\n  setTimeout(() => {\n    const emRelay = getRelayInfo(\"power_contactor\");\n    if (emRelay) {\n      emRelay.array[emRelay.bit] = false;                 // röle array güncelle\n      runtime.power_contactor = { val: \"off\" };           // runtime güncelle\n      evtMsgs.push({ payload: { method: \"evt\", params: { type: \"power_contactor\", val: \"off\" } } });\n      relayMsgs.push(createRelayMsg(emRelay.array, emRelay.unitid, emRelay.arrayName));  // modbus yazma\n      enqueueMsgs();  // kuyruk çalıştır\n    }\n  }, 1000);\n\n} else if (type === \"off\" && target === \"actuators\") {\n  doActuatorsOff();\n} else {\n  const sinamics = config.sinamics?.channels?.[target];\n  if (sinamics) {\n    const unitid = sinamics.unitid;\n    const commandWords = config.sinamics.command_words;\n    const speedMax = config.sinamics.speed_max;\n    if ([\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const value = commandWords[type];\n      if (value != null) {\n        sinamicsMsgs.push({ payload: { value, fc: 6, unitid, address: 99, quantity: 1 } });\n        if (!runtime[target]) runtime[target] = {};\n        runtime[target].val = type;\n      }\n    }\n    if (type === \"speed\" && typeof set_point === \"number\") {\n      const value = Math.round(set_point / 100 * speedMax);\n      sinamicsMsgs.push({ payload: { value, fc: 6, unitid, address: 100, quantity: 1 } });\n      if (!runtime[target]) runtime[target] = {};\n      if (!runtime[target].speed) runtime[target].speed = {};\n      runtime[target].speed.set_point = set_point;\n    }\n    evtMsgs.push({ payload: { method: \"evt\", params: { type: target, val: runtime[target].val, speed: runtime[target].speed ? { set_point: runtime[target].speed.set_point } : undefined } } });\n    enqueueMsgs();\n  } else {\n    if ([\"on\", \"off\"].includes(type)) {\n      const relay = getRelayInfo(target);\n      if (relay) {\n        const val = type === \"on\";\n        relay.array[relay.bit] = val;\n        runtime[target] = { val: type };\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: target, val: type } } });\n      }\n    }\n\n    // === Tekil loader komutları için güncelleme ===\n    if (target === \"loader\" && [\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n      const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n        .filter(([_, val]) => val.group === \"loader\")\n        .map(([key]) => key);\n      const relays = Object.fromEntries(loaderKeys.map(key => [key, getRelayInfo(key)]).filter(([_, info]) => info));\n      const motor = relays[\"loader_motor\"];\n      const fwd = relays[\"loader_forward_valve\"];\n      const rev = relays[\"loader_reverse_valve\"];\n      if (motor && fwd && rev) {\n        if (type === \"forward_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = true; rev.array[rev.bit] = false; }\n        else if (type === \"reverse_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = false; rev.array[rev.bit] = true; }\n        else if (type === \"off\") { motor.array[motor.bit] = false; fwd.array[fwd.bit] = false; rev.array[rev.bit] = false; }\n\n        // runtime güncelle\n        runtime.loader = { val: type };\n        runtime.loader_motor = { val: type === \"off\" ? \"off\" : \"on\" };\n        runtime.loader_forward_valve = { val: type === \"off\" ? \"off\" : (type === \"forward_on\" ? \"on\" : \"off\") };\n        runtime.loader_reverse_valve = { val: type === \"off\" ? \"off\" : (type === \"reverse_on\" ? \"on\" : \"off\") };\n\n        // evt mesajları ekle\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader\", val: type } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_motor\", val: runtime.loader_motor.val } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_forward_valve\", val: runtime.loader_forward_valve.val } } });\n        evtMsgs.push({ payload: { method: \"evt\", params: { type: \"loader_reverse_valve\", val: runtime.loader_reverse_valve.val } } });\n      }\n    }\n\n    relayMsgs.push(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n    relayMsgs.push(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n    enqueueMsgs();\n  }\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
-        "outputs": 3,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 960,
-        "y": 540,
-        "wires": [
-            [
-                "0719549b97c80402",
-                "1c798b44f6d4353a"
-            ],
-            [
-                "155eb5f34a3f5ca3",
-                "7ccdddabf54a9ffe"
-            ],
-            [
-                "0b3654ab51cfd27c",
-                "86a9ac90f6c99b53"
-            ]
         ]
     },
     {
@@ -434,8 +405,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 570,
-        "y": 60,
+        "x": 810,
+        "y": 180,
         "wires": [
             [
                 "0b3654ab51cfd27c",
@@ -457,8 +428,8 @@
         "correl": "",
         "expiry": "",
         "broker": "e1d018cea69d77b6",
-        "x": 1240,
-        "y": 60,
+        "x": 1280,
+        "y": 180,
         "wires": []
     },
     {
@@ -474,7 +445,7 @@
         "finalize": "",
         "libs": [],
         "x": 350,
-        "y": 60,
+        "y": 180,
         "wires": [
             [
                 "beb4346081038e85"
@@ -499,7 +470,7 @@
         "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"inject\", \"target\": \"flow_context\"}}",
         "payloadType": "json",
         "x": 130,
-        "y": 60,
+        "y": 180,
         "wires": [
             [
                 "c3f4a0e8f8030852"
@@ -518,16 +489,17 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 980,
-        "y": 440,
+        "x": 1040,
+        "y": 520,
         "wires": [
             [
                 "22442867c06e05b8",
                 "664d95256e2c36ad"
             ],
             [
-                "69b69a40e08aa884",
-                "eabb49f6ea664cdf"
+                "eabb49f6ea664cdf",
+                "c6751ebfbed920fc",
+                "d8c51a71cc91d064"
             ],
             [
                 "0b3654ab51cfd27c",
@@ -552,8 +524,8 @@
         "topic": "",
         "payload": "{\"method\": \"evt\", \"params\": {\"type\": \"timer_tick\", \"val\": null}}",
         "payloadType": "json",
-        "x": 590,
-        "y": 440,
+        "x": 850,
+        "y": 500,
         "wires": [
             [
                 "8701a07643f54a7b"
@@ -572,8 +544,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1230,
-        "y": 260,
+        "x": 870,
+        "y": 320,
         "wires": [
             [
                 "8701a07643f54a7b",
@@ -597,8 +569,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 980,
-        "y": 60,
+        "x": 1060,
+        "y": 180,
         "wires": [
             [
                 "b7b87a40dd91a021",
@@ -627,7 +599,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 280,
+        "y": 360,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -650,7 +622,7 @@
         "finalize": "",
         "libs": [],
         "x": 610,
-        "y": 360,
+        "y": 440,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -671,7 +643,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 200,
+        "y": 280,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -697,7 +669,7 @@
         "delayOnStart": false,
         "startDelayTime": "",
         "x": 370,
-        "y": 220,
+        "y": 300,
         "wires": [
             [
                 "db72d07653f1bbe9"
@@ -722,8 +694,8 @@
         "topic": "",
         "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"power\"}}",
         "payloadType": "json",
-        "x": 1240,
-        "y": 300,
+        "x": 880,
+        "y": 360,
         "wires": [
             [
                 "22442867c06e05b8"
@@ -734,7 +706,7 @@
         "id": "7701af895b46dbeb",
         "type": "inject",
         "z": "2d8538969c77a5df",
-        "name": "telemetry_periodical",
+        "name": "telemetry",
         "props": [
             {
                 "p": "payload"
@@ -747,8 +719,8 @@
         "topic": "",
         "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"telemetry_periodical\"}}",
         "payloadType": "json",
-        "x": 620,
-        "y": 480,
+        "x": 840,
+        "y": 540,
         "wires": [
             [
                 "8701a07643f54a7b"
@@ -759,7 +731,7 @@
         "id": "1c798b44f6d4353a",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "actuators_1",
+        "name": "relays_1",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -768,15 +740,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1200,
-        "y": 660,
+        "x": 1290,
+        "y": 580,
         "wires": []
     },
     {
         "id": "7ccdddabf54a9ffe",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "actuators_2",
+        "name": "relays_2",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -785,15 +757,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1200,
-        "y": 700,
+        "x": 1290,
+        "y": 620,
         "wires": []
     },
     {
         "id": "86a9ac90f6c99b53",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "actuators_3",
+        "name": "sinamics_1",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -802,8 +774,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1200,
-        "y": 740,
+        "x": 1300,
+        "y": 660,
         "wires": []
     },
     {
@@ -819,8 +791,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 550,
-        "y": 660,
+        "x": 610,
+        "y": 480,
         "wires": []
     },
     {
@@ -836,8 +808,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 540,
-        "y": 700,
+        "x": 600,
+        "y": 520,
         "wires": []
     },
     {
@@ -853,8 +825,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 550,
-        "y": 740,
+        "x": 610,
+        "y": 560,
         "wires": []
     },
     {
@@ -870,8 +842,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 540,
-        "y": 780,
+        "x": 600,
+        "y": 600,
         "wires": []
     },
     {
@@ -887,8 +859,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 310,
-        "y": 660,
+        "x": 830,
+        "y": 140,
         "wires": []
     },
     {
@@ -904,8 +876,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 110,
-        "y": 660,
+        "x": 370,
+        "y": 140,
         "wires": []
     },
     {
@@ -921,8 +893,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 330,
-        "y": 700,
+        "x": 1070,
+        "y": 40,
         "wires": []
     },
     {
@@ -938,8 +910,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 330,
-        "y": 740,
+        "x": 1070,
+        "y": 80,
         "wires": []
     },
     {
@@ -955,8 +927,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 330,
-        "y": 780,
+        "x": 1070,
+        "y": 120,
         "wires": []
     },
     {
@@ -972,8 +944,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 740,
-        "y": 660,
+        "x": 880,
+        "y": 400,
         "wires": []
     },
     {
@@ -989,8 +961,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 940,
-        "y": 660,
+        "x": 1040,
+        "y": 580,
         "wires": []
     },
     {
@@ -1006,8 +978,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 940,
-        "y": 700,
+        "x": 1040,
+        "y": 620,
         "wires": []
     },
     {
@@ -1023,8 +995,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 940,
-        "y": 740,
+        "x": 1040,
+        "y": 660,
         "wires": []
     },
     {
@@ -1040,7 +1012,74 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 740,
+        "x": 880,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "c6751ebfbed920fc",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "relays",
+        "func": "const flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst relayChannels1 = config.io.relay_outputs_1.channels || {};\nconst relayChannels2 = config.io.relay_outputs_2.channels || {};\nconst unitid1 = config.io.relay_outputs_1.unitid;\nconst unitid2 = config.io.relay_outputs_2.unitid;\n\nlet currentArray1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet currentArray2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\nfunction getRelayInfo(name) {\n  if (relayChannels1?.[name]) return { array: currentArray1, bit: relayChannels1[name].map, unitid: unitid1, arrayName: \"last_write_array_1\" };\n  if (relayChannels2?.[name]) return { array: currentArray2, bit: relayChannels2[name].map, unitid: unitid2, arrayName: \"last_write_array_2\" };\n  return null;\n}\n\nfunction createRelayMsg(array, unitid, arrayName) {\n  let word = 0;\n  for (let i = 0; i < 8; i++) {\n    if (array[i]) word |= (1 << i);\n  }\n  context.set(arrayName, array);\n  return { payload: { value: word, fc: 6, unitid, address: 128, quantity: 1 } };\n}\n\n// queue sadece port 1 için\nfunction enqueuePort1(msgObj) {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  sendQueue.push(msgObj);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n  const msgObj = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n  node.send([msgObj, null]); // port 1\n  setTimeout(processQueue, 50);\n}\n\n// evt mesajları port 2’den direkt gönderim\nfunction sendEvt(msgObj) {\n  node.send([null, msgObj]); // port 2\n}\n\n// === Genel relays off fonksiyonu ===\nfunction resetRelays({ preservePowerContactor = false, setPowerContactor = null } = {}) {\n  // relay 1 ve relay 2 arraylerini sıfırla\n  currentArray1 = Array(8).fill(false);\n  currentArray2 = Array(8).fill(false);\n\n  // power_contactor korunacak veya değiştirilecek\n  if (preservePowerContactor) {\n    const emBit = relayChannels2.power_contactor?.map;\n    if (emBit !== undefined) currentArray2[emBit] = runtime.power_contactor?.val === \"on\";\n  } else if (setPowerContactor !== null) {\n    const emBit = relayChannels2.power_contactor?.map;\n    if (emBit !== undefined) currentArray2[emBit] = setPowerContactor;\n    runtime.power_contactor = { val: setPowerContactor ? \"on\" : \"off\" };\n  }\n\n  // power_contactor evt mesajı her zaman gönderilsin\n  if (relayChannels2.power_contactor) {\n    sendEvt({ payload: { method: \"evt\", params: { type: \"power_contactor\", val: runtime.power_contactor.val } } });\n  }\n\n  // loader ve diğer röleler off\n  for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {\n    if (name === \"power_contactor\") continue;\n    if (runtime[name]) runtime[name].val = \"off\";\n    sendEvt({ payload: { method: \"evt\", params: { type: name, val: \"off\" } } });\n  }\n\n  // loader özel off\n  const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n    .filter(([_, val]) => val.group === \"loader\")\n    .map(([key]) => key);\n  loaderKeys.forEach(key => {\n    const r = getRelayInfo(key);\n    if (r) r.array[r.bit] = false;\n  });\n  runtime.loader = { val: \"off\" };\n  sendEvt({ payload: { method: \"evt\", params: { type: \"loader\", val: \"off\" } } });\n\n  // modbus mesajları port1 üzerinden\n  enqueuePort1(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n  enqueuePort1(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n}\n\n// === Mesaj işleme ===\nif (type === \"off\" && target === \"actuators\") {\n  resetRelays({ preservePowerContactor: true });\n\n} else if (type === \"off\" && target === \"power\") {\n  resetRelays({ setPowerContactor: false });\n\n} else if (type === \"on\" && target === \"power\") {\n  resetRelays({ setPowerContactor: true });\n\n} else {\n  // loader ve diğer röleler\n  const relay = getRelayInfo(target);\n  if (relay) {\n    const val = type === \"on\";\n    relay.array[relay.bit] = val;\n    runtime[target] = { val: type };\n    sendEvt({ payload: { method: \"evt\", params: { type: target, val: type } } });\n    enqueuePort1(createRelayMsg(relay.array, relay.unitid, relay.arrayName));\n  }\n\n  // loader özel forward/reverse\n  if (target === \"loader\") {\n    const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n      .filter(([_, val]) => val.group === \"loader\")\n      .map(([key]) => key);\n    const relays = Object.fromEntries(loaderKeys.map(key => [key, getRelayInfo(key)]).filter(([_, info]) => info));\n    const motor = relays[\"loader_motor\"];\n    const fwd = relays[\"loader_forward_valve\"];\n    const rev = relays[\"loader_reverse_valve\"];\n    if (motor && fwd && rev) {\n      if (type === \"forward_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = true; rev.array[rev.bit] = false; }\n      else if (type === \"reverse_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = false; rev.array[rev.bit] = true; }\n      else if (type === \"off\") { motor.array[motor.bit] = false; fwd.array[fwd.bit] = false; rev.array[rev.bit] = false; }\n\n      runtime.loader = { val: type };\n      runtime.loader_motor = { val: type === \"off\" ? \"off\" : \"on\" };\n      runtime.loader_forward_valve = { val: type === \"off\" ? \"off\" : (type === \"forward_on\" ? \"on\" : \"off\") };\n      runtime.loader_reverse_valve = { val: type === \"off\" ? \"off\" : (type === \"reverse_on\" ? \"on\" : \"off\") };\n\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader\", val: type } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_motor\", val: runtime.loader_motor.val } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_forward_valve\", val: runtime.loader_forward_valve.val } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_reverse_valve\", val: runtime.loader_reverse_valve.val } } });\n\n      enqueuePort1(createRelayMsg(motor.array, motor.unitid, motor.arrayName));\n      enqueuePort1(createRelayMsg(fwd.array, fwd.unitid, fwd.arrayName));\n      enqueuePort1(createRelayMsg(rev.array, rev.unitid, rev.arrayName));\n    }\n  }\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1270,
+        "y": 500,
+        "wires": [
+            [
+                "0719549b97c80402",
+                "1c798b44f6d4353a"
+            ],
+            [
+                "0b3654ab51cfd27c",
+                "7ccdddabf54a9ffe"
+            ]
+        ]
+    },
+    {
+        "id": "d8c51a71cc91d064",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "sinamics",
+        "func": "// === SINAMICS.JS ===\n// Bu nod motor sürücülerini (sinamics) yönetir.\n// Port 1: Modbus Flex Writer’a gönderim (sinamics komutları)\n// Port 2: EVT mesajları (durum/speed)\n\n// === Flow context ===\nconst flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst sinamicsChannels = config.sinamics?.channels || {};\nconst commandWords = config.sinamics?.command_words || {};\nconst speedMax = config.sinamics?.speed_max || 16384;\n\n// === Gönderim listeleri ===\nconst modbusMsgs = []; // Port 1\nconst evtMsgs = [];    // Port 2\n\n// === Kuyruk sistemi ===\nfunction enqueueMsgs() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  const queuedMsgs = [];\n  modbusMsgs.forEach(m => queuedMsgs.push([0, m])); // Port 1\n  evtMsgs.forEach(m => queuedMsgs.push([1, m]));   // Port 2\n  sendQueue.push(...queuedMsgs);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n\n  const [portIndex, msgObj] = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n\n  node.send([\n    portIndex === 0 ? msgObj : null,\n    portIndex === 1 ? msgObj : null\n  ]);\n\n  // Port 1 modbus için 50 ms bekleme, Port 2 evt anında\n  setTimeout(processQueue, portIndex === 0 ? 50 : 0);\n}\n\n// === Modbus mesajı oluştur ===\nfunction createModbusMsg(value, unitid, address, quantity = 1) {\n  return { payload: { value, fc: 6, unitid, address, quantity } };\n}\n\n// === Tüm sinamicsleri OFF ===\nfunction doSinamicsOff() {\n  for (const [name, sin] of Object.entries(sinamicsChannels)) {\n    // motoru durdur\n    const offVal = commandWords.off;\n    if (offVal != null) {\n      modbusMsgs.push(createModbusMsg(offVal, sin.unitid, 99, 1));\n    }\n\n    // hız registerına runtime’daki speed’i gönder\n    let speedValue = 0;\n    if (runtime[name]?.speed?.set_point != null) {\n      speedValue = Math.round(runtime[name].speed.set_point / 100 * speedMax);\n    }\n    modbusMsgs.push(createModbusMsg(speedValue, sin.unitid, 100, 1));\n\n    // runtime güncelle – speed aynen kalıyor\n    if (!runtime[name]) runtime[name] = {};\n    runtime[name].val = \"off\";\n\n    evtMsgs.push({\n      payload: {\n        method: \"evt\",\n        params: {\n          type: name,\n          val: runtime[name].val,\n          speed: runtime[name].speed\n            ? { set_point: runtime[name].speed.set_point }\n            : undefined\n        }\n      }\n    });\n  }\n  enqueueMsgs();\n}\n\n// === Komut işleme ===\nif (type === \"off\" && target === \"actuators\") {\n  // Tüm sinamicsleri kapat\n  doSinamicsOff();\n\n} else if (type === \"off\" && target === \"power\") {\n  // Tüm sinamicsleri kapat\n  doSinamicsOff();\n\n} else if (type === \"on\" && target === \"power\") {\n  // 10 sn bekleyip tüm sinamics’leri kapat\n  setTimeout(doSinamicsOff, 10000);\n\n} else if (sinamicsChannels[target]) {\n  // Tekil motorlar için yön/sürat komutları\n  const unitid = sinamicsChannels[target].unitid;\n\n  if ([\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n    const value = commandWords[type];\n    if (value != null) {\n      modbusMsgs.push(createModbusMsg(value, unitid, 99, 1));\n      if (!runtime[target]) runtime[target] = {};\n      runtime[target].val = type;\n    }\n\n    // her off/forward_on/reverse_on’da runtime speed’i de 100’e gönder\n    let speedValue = 0;\n    if (runtime[target]?.speed?.set_point != null) {\n      speedValue = Math.round(runtime[target].speed.set_point / 100 * speedMax);\n    }\n    modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));\n  }\n\n  if (type === \"speed\" && typeof set_point === \"number\") {\n    const value = Math.round(set_point / 100 * speedMax);\n    modbusMsgs.push(createModbusMsg(value, unitid, 100, 1));\n    if (!runtime[target]) runtime[target] = {};\n    if (!runtime[target].speed) runtime[target].speed = {};\n    runtime[target].speed.set_point = set_point;\n  }\n\n  // evt her zaman\n  evtMsgs.push({\n    payload: {\n      method: \"evt\",\n      params: {\n        type: target,\n        val: runtime[target]?.val,\n        speed: runtime[target]?.speed\n          ? { set_point: runtime[target].speed.set_point }\n          : undefined\n      }\n    }\n  });\n  enqueueMsgs();\n\n} else {\n  // Bu nod sadece sinamicsleri işler\n  return null;\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 540,
+        "wires": [
+            [
+                "155eb5f34a3f5ca3",
+                "86a9ac90f6c99b53"
+            ],
+            [
+                "0b3654ab51cfd27c",
+                "32d9ab15358d3e71"
+            ]
+        ]
+    },
+    {
+        "id": "32d9ab15358d3e71",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "sinamics_2",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1300,
         "y": 700,
         "wires": []
     }

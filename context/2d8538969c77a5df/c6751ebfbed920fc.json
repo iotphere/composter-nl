@@ -1,16 +1,4 @@
 {
-    "last_write_array_2": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
-    ],
-    "sendQueue": [],
-    "isSending": false,
     "last_write_array_1": [
         false,
         false,
@@ -20,5 +8,17 @@
         false,
         false,
         false
+    ],
+    "sendQueue": [],
+    "isSending": false,
+    "last_write_array_2": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
     ]
 }

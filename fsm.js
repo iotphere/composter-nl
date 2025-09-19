@@ -112,11 +112,11 @@ if (method === "evt") {
 
   } else if (target === "roof") {
 
-    if (type === "forward_on") {
+    if (type === "forward") {
       if (runtime.roof_forward_limit.val === "off") {
         return null;
       }
-    } else if (type === "reverse_on") {
+    } else if (type === "reverse") {
       if (runtime.roof_reverse_limit.val === "off") {
         return null;
       }

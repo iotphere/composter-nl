@@ -10,6 +10,7 @@ const flowData = {
   config: {
     labels: {true: "on", false: "off"},
     io: {
+      queue_interval: 50,
       digital_inputs: {
         config_node: "201_115200_tcp_rtu_dig_inp",
         unitid: 11,
@@ -49,6 +50,13 @@ const flowData = {
           loader_motor: {map: 6, group: "loader"},
           power_contactor: {map: 7}
         }
+      },
+      relay_groups: {
+        loader: {
+          loader_motor: null,
+          loader_forward_valve: null,
+          loader_reverse_valve: null    
+        }
       }
     },
     energy_meter: {
@@ -60,21 +68,29 @@ const flowData = {
     },  
     sinamics: {
       config_node: "202_9600_tcp_rtu_sinamics",
-      command_words: {forward_on: 1279, reverse_on: 3327, off: 1278},
-      speed_max: 16384, // modbus send >> set_point / 100 * speed_max
       channels: {
         roof: {unitid: 11},
         fan: {unitid: 12},
         water_pump: {unitid: 13},
         discharger: {unitid: 14}
-      }
+      },
+      command_words: {forward: 1151, reverse: 3199, off: 1150, fault_ack_res: 1150, fault_ack_set: 1278},
+      status_word: {
+        work: {map: 2},
+        fault: {map: 3},
+        warning: {map: 7},
+        direction: {map: 14}
+      },
+      speed_max: 16384, // modbus send >> set_point / 100 * speed_max
+      queue_interval: 50,
+      power_up_time: 10000
     },
     timers: {      
       fan_pwm: {
         form: "pwm",
         t_duty: 10, t_cycle: 180, unit: "min",
         pass: {
-          1: {method: "cmd", params: {type: "forward_on", target: "fan"}, port: 2},
+          1: {method: "cmd", params: {type: "forward", target: "fan"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "fan"}, port: 2}
         }
       },
@@ -82,7 +98,7 @@ const flowData = {
         form: "pwm",
         t_duty: 15, t_cycle: 360, unit: "min",
         pass: {
-          1: {method: "cmd", params: {type: "forward_on", target: "water_pump"}, port: 2},
+          1: {method: "cmd", params: {type: "forward", target: "water_pump"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "water_pump"}, port: 2}
         }
       },

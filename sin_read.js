@@ -1,4 +1,4 @@
-// === SIN_POLL.JS ===
+// === SIN_READ..JS ===
 // Bu fonksiyon nodu, her tetiklendiğinde tüm sinamics sürücülerinin ZSW Status Word registerlerini okumak için mesaj üretir.
 // Çıkışı sin_queue'ya bağlıdır.
 
@@ -10,7 +10,7 @@ const sinamicsChannels = flowData.config.sinamics.channels;
 const address = 109;   // ZSW Status Word register adresi
 const quantity = 1;    // Okunacak register sayısı
 
-// Her sürücü için read mesajı oluştur
+// Mesajları oluştur
 const msgs = Object.entries(sinamicsChannels).map(([name, cfg]) => {
     const unitid = cfg.unitid;
     return {
@@ -19,9 +19,10 @@ const msgs = Object.entries(sinamicsChannels).map(([name, cfg]) => {
             unitid: unitid,
             address: address,
             quantity: quantity,
-            meta: { unitid: unitid }  // hangi sürücüye ait olduğunu belirtmek için
+            meta: { unitid: unitid }
         }
     };
 });
 
-return msgs;
+// Tek çıkıştan dört mesaj olarak göndermek için:
+return [ msgs ];

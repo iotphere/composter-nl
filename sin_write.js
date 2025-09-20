@@ -1,5 +1,5 @@
-// === SIN_CMD.JS ===
-// Bu nod gelen "cmd" mesajlarına göre sinamics sürücülerine modbus write mesajları oluşturur
+// === SIN_WRITE.JS ===
+// Bu node gelen "cmd" mesajlarına göre sinamics sürücülerine modbus write mesajları oluşturur
 // Çıkışı sin_queue'ya bağlı olacak, evt mesajları üretmeyecek
 
 const flowData = flow.get("flow");
@@ -21,21 +21,19 @@ const powerUpTime = config.sinamics.power_up_time || 10000;
 
 // Modbus write mesajı oluştur
 function createModbusMsg(value, unitid, address, quantity = 1) {
-    return {
-        payload: { value, fc: 6, unitid, address, quantity }
-    };
+    return { payload: { value, fc: 6, unitid, address, quantity } };
 }
 
-// Tüm sinamicsleri OFF komutu (actuators veya power)
+// Tüm sinamicsleri OFF komutu
 function doSinamicsOff() {
     const msgs = [];
     for (const [name, sin] of Object.entries(sinamicsChannels)) {
         const unitid = sin.unitid;
+
         // Komut word
         const offVal = commandWords.off;
-        if (offVal != null) {
-            msgs.push(createModbusMsg(offVal, unitid, 99, 1));
-        }
+        if (offVal != null) msgs.push(createModbusMsg(offVal, unitid, 99, 1));
+
         // Speed register
         const speedValue = runtime[name]?.speed?.set_point
             ? Math.round(runtime[name].speed.set_point / 100 * speedMax)
@@ -47,6 +45,11 @@ function doSinamicsOff() {
         runtime[name].val = "off";
     }
     return msgs;
+}
+
+// Mesajları tek çıkışa gönder
+function sendMsgs(msgs) {
+    for (const m of msgs) node.send(m);
 }
 
 let modbusMsgs = [];
@@ -61,24 +64,26 @@ if (type === "fault_ack" && target === "sinamics") {
         return null;
     }
 
-    // Önce SET mesajları
     for (const [name, sin] of Object.entries(sinamicsChannels)) {
         modbusMsgs.push(createModbusMsg(faultAckSet, sin.unitid, 99, 1));
     }
-    // Sonra RESET mesajları
     for (const [name, sin] of Object.entries(sinamicsChannels)) {
         modbusMsgs.push(createModbusMsg(faultAckRes, sin.unitid, 99, 1));
     }
 
 } else if ((type === "off" && (target === "actuators" || target === "power"))) {
+    // 🔹 Hemen gönder
     modbusMsgs = doSinamicsOff();
+    sendMsgs(modbusMsgs);
+
 } else if (type === "on" && target === "power") {
-    // gecikmeli off
+    // 🔹 Gecikmeli gönderim
     setTimeout(() => {
-        const msgs = doSinamicsOff();
-        node.send(msgs);
+        const delayedMsgs = doSinamicsOff();
+        sendMsgs(delayedMsgs);
         flow.set("flow", flowData);
     }, powerUpTime);
+
 } else if (sinamicsChannels[target]) {
     const unitid = sinamicsChannels[target].unitid;
 
@@ -103,12 +108,11 @@ if (type === "fault_ack" && target === "sinamics") {
         if (!runtime[target].speed) runtime[target].speed = {};
         runtime[target].speed.set_point = set_point;
     }
+
+    sendMsgs(modbusMsgs);
 } else {
     return null; // Sadece sinamics target'larını işler
 }
-
-// Modbus mesajlarını direk node.send ile gönderiyoruz, sin_queue tarafından kuyruklanacak
-node.send(modbusMsgs);
 
 flow.set("flow", flowData);
 return null;

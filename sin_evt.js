@@ -2,6 +2,7 @@
  * sin_evt – sin_getter’dan gelen ZSW (status word)
  * değişim olduğunda evt mesajı üretir.
  * Tüm bit tanımları config.status_word’dan dinamik alınır.
+ * Çıkış msg.payload üzerinden verilecek.
  ****************************************************/
 
 const flowData = flow.get("flow") || {};
@@ -9,15 +10,16 @@ const sinConfig = flowData.config?.sinamics || {};
 const labels = flowData.config?.labels || {true: "on", false: "off"};
 const statusWordMap = sinConfig.status_word || {};
 
-// payload yine array [val] veya tek val olabilir
+// payload array [val] veya tek val olabilir
 const rawVal = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;
 
 // hangi sürücüye ait olduğunu meta’dan bul
-const unitid = msg.meta?.unitid; // güvenli erişim
+const unitid = msg.meta?.unitid;
 if (unitid === undefined) {
     node.warn("unitid bilgisi yok (meta.unitid).");
     return null;
 }
+
 let targetName = null;
 for (const [name, ch] of Object.entries(sinConfig.channels || {})) {
     if (ch.unitid === unitid) {
@@ -65,12 +67,14 @@ if (changed) {
     lastStates[targetName] = stateObj;
     context.set("lastStates", lastStates);
 
-    // evt mesajı oluştur
+    // evt mesajını payload içine sar
     const evtMsg = {
-        method: "evt",
-        params: {
-            type: targetName,
-            val: stateObj
+        payload: {
+            method: "evt",
+            params: {
+                type: targetName,
+                val: stateObj
+            }
         }
     };
 

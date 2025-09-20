@@ -50,11 +50,6 @@ function buildTelemetryMsg(content) {
 if (method === "evt") {
     const subType = params?.type;
 
-    // subtype = telemetry_periodical → flowData.runtime
-    if (subType === "telemetry_periodical") {
-        return [buildTelemetryMsg(flowData.runtime || {}), null, null];
-    }
-
     // Geri kalan tüm evt’ler için esnek format:
     // params.type dışındaki her şeyi otomatik kapsar
     if (subType) {

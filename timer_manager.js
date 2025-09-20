@@ -59,12 +59,6 @@ function timerOn(timer, rt, now, out, target, forcedCount = null) {
       pushMessage(timer, 1, out);
       break;
 
-    case "loop":
-      rt.on_time = now;
-      rt.next_time = now + toMs(timer.interval, timer.unit);
-      pushMessage(timer, 1, out);
-      break;
-
     case "counter":
       rt.on_time = now;
       rt.count = forcedCount !== null ? forcedCount : timer.base;
@@ -73,9 +67,7 @@ function timerOn(timer, rt, now, out, target, forcedCount = null) {
       const entry4 = timer.pass?.[4];
       if (entry4) {
         entry4.params = entry4.params || {};
-        // ÖNEMLİ: sabit değer atamak yerine val özelliğini sil
-        // böylece pushMessage her seferinde runtime[target].count koyar
-        delete entry4.params.val;
+        delete entry4.params.val; // runtime[target].count koyabilmesi için
       }
 
       pushMessage(timer, 1, out, runtime, target);
@@ -98,10 +90,6 @@ function timerOff(timer, rt, out, target, suppressMessages = false) {
       if (!suppressMessages) pushMessage(timer, 2, out);
       break;
 
-    case "loop":
-      if (!suppressMessages) pushMessage(timer, 1, out);
-      break;
-
     case "counter":
       rt.count = 0;
       if (!suppressMessages) {
@@ -109,7 +97,7 @@ function timerOff(timer, rt, out, target, suppressMessages = false) {
         pushMessage(timer, 4, out, runtime, target);
       }
 
-      // day_counter için evt day 0 mesajı her koşulda
+      // day_counter için evt day 0 mesajı
       if (target === "day_counter") {
         out[2].push({
           payload: {
@@ -121,7 +109,7 @@ function timerOff(timer, rt, out, target, suppressMessages = false) {
       break;
   }
 
-  // Genel reset: runtime içindeki yardımcı alanlar
+  // Genel reset
   rt.on_time = null;
   rt.next_time = null;
   rt.phase_until = null;
@@ -155,13 +143,6 @@ function timerTick(timers, runtime, now, out) {
         }
         break;
 
-      case "loop":
-        if (now >= rt.next_time) {
-          rt.next_time = now + toMs(timer.interval, timer.unit);
-          pushMessage(timer, 1, out);
-        }
-        break;
-
       case "counter":
         if (now >= rt.next_time && rt.count > 0) {
           rt.count -= 1;
@@ -177,7 +158,6 @@ function timerTick(timers, runtime, now, out) {
             rt.state = "off";
             pushMessage(timer, 3, out, runtime, key);
 
-            // Son kalan gün evt day 0 mesajı
             if (key === "day_counter") {
               out[2].push({
                 payload: {
@@ -187,7 +167,6 @@ function timerTick(timers, runtime, now, out) {
               });
             }
 
-            // Reset runtime yardımcı alanlar
             rt.on_time = null;
             rt.next_time = null;
             rt.phase_until = null;
@@ -206,7 +185,6 @@ if (method === "cmd") {
     if (!runtime[target]) runtime[target] = {};
     const rt = runtime[target];
 
-    // day_counter'ı signal anına getir ve timerOn gibi başlat
     timerOn(timers[target], rt, Date.now(), out, target, timers[target].signal);
 
   } else if (timers[target]) {
@@ -218,7 +196,6 @@ if (method === "cmd") {
     }
   } else if (type === "off" && target === "timers") {
     for (const [key, timer] of Object.entries(timers)) {
-      if (key === "telemetry_periodical") continue;
       if (!runtime[key]) runtime[key] = {};
       timerOff(timer, runtime[key], out, key, true);
     }

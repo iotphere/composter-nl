@@ -2,7 +2,7 @@
 // relays_write port1’den gelen fc:6 write mesajlarını sıraya alır ve
 // relays_writer node’una gönderir.
 
-const queueInterval = flow.get("flow")?.config?.io?.queue_interval || 20;
+const queueInterval = flow.get("flow")?.config?.io?.queue_interval || 50;
 
 let sendQueue = context.get("sendQueue") || [];
 sendQueue = sendQueue.concat(Array.isArray(msg) ? msg : [msg]); // gelen mesaj dizisi olabilir

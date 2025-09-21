@@ -1,0 +1,10 @@
+{
+    "lastStates": {
+        "fan": {
+            "work": "off",
+            "fault": "off",
+            "warning": "off",
+            "direction": "off"
+        }
+    }
+}

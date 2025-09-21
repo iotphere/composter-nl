@@ -162,7 +162,7 @@
         "id": "0719549b97c80402",
         "type": "modbus-flex-write",
         "z": "2d8538969c77a5df",
-        "name": "write_relay_outputs",
+        "name": "relays_writer",
         "showStatusActivities": false,
         "showErrors": true,
         "showWarnings": true,
@@ -171,8 +171,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "10",
-        "x": 1310,
-        "y": 380,
+        "x": 890,
+        "y": 720,
         "wires": [
             [],
             []
@@ -191,7 +191,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 240,
+        "y": 280,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -214,7 +214,7 @@
         "finalize": "",
         "libs": [],
         "x": 600,
-        "y": 320,
+        "y": 360,
         "wires": [
             [
                 "54a9a79a7c485b62",
@@ -236,10 +236,11 @@
         "finalize": "",
         "libs": [],
         "x": 600,
-        "y": 400,
+        "y": 440,
         "wires": [
             [
-                "8b647d54a390a264"
+                "8b647d54a390a264",
+                "b442c38084e0c61c"
             ]
         ]
     },
@@ -247,7 +248,7 @@
         "id": "8d59f82c1f6e0d51",
         "type": "modbus-flex-getter",
         "z": "2d8538969c77a5df",
-        "name": "get_digital_inputs",
+        "name": "digital_inputs_getter",
         "showStatusActivities": false,
         "showErrors": false,
         "showWarnings": true,
@@ -260,8 +261,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "",
-        "x": 370,
-        "y": 240,
+        "x": 380,
+        "y": 280,
         "wires": [
             [
                 "ecf66dea2db91aea"
@@ -287,7 +288,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 11, \"address\": 144 , \"quantity\": 1}",
         "payloadType": "json",
         "x": 130,
-        "y": 240,
+        "y": 280,
         "wires": [
             [
                 "8d59f82c1f6e0d51"
@@ -312,7 +313,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 12, \"address\": 160 , \"quantity\": 8}",
         "payloadType": "json",
         "x": 140,
-        "y": 300,
+        "y": 340,
         "wires": [
             [
                 "890e808611421ece"
@@ -338,7 +339,7 @@
         "payload": "{\"fc\": 3, \"unitid\": 2, \"address\": 29 , \"quantity\": 2}",
         "payloadType": "json",
         "x": 130,
-        "y": 400,
+        "y": 440,
         "wires": [
             [
                 "6f4e90bab79df245"
@@ -350,7 +351,7 @@
         "type": "modbus-flex-getter",
         "z": "2d8538969c77a5df",
         "d": true,
-        "name": "get_energy_meter",
+        "name": "energy_meter_getter",
         "showStatusActivities": false,
         "showErrors": true,
         "showWarnings": true,
@@ -363,8 +364,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "",
-        "x": 370,
-        "y": 400,
+        "x": 380,
+        "y": 440,
         "wires": [
             [
                 "1b7f0d4c81a3700c"
@@ -376,7 +377,7 @@
         "id": "155eb5f34a3f5ca3",
         "type": "modbus-flex-write",
         "z": "2d8538969c77a5df",
-        "name": "write_sinamics",
+        "name": "sin_writer",
         "showStatusActivities": false,
         "showErrors": false,
         "showWarnings": true,
@@ -385,8 +386,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "",
-        "x": 1300,
-        "y": 440,
+        "x": 880,
+        "y": 660,
         "wires": [
             [],
             []
@@ -405,8 +406,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 810,
-        "y": 180,
+        "x": 870,
+        "y": 220,
         "wires": [
             [
                 "0b3654ab51cfd27c",
@@ -428,8 +429,8 @@
         "correl": "",
         "expiry": "",
         "broker": "e1d018cea69d77b6",
-        "x": 1280,
-        "y": 180,
+        "x": 1320,
+        "y": 220,
         "wires": []
     },
     {
@@ -437,7 +438,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "flow_context",
-        "func": "const payload = msg.payload || {};\nconst method = payload.method || \"\";\nconst params = payload.params || {};\n\nif (!(method === \"cmd\" && params.type === \"inject\" && params.target === \"flow_context\")) {\n    return null; // diğer tüm mesajları görmezden gel\n}\n\nconst flowData = {\n  config: {\n    labels: {true: \"on\", false: \"off\"},\n    io: {\n      digital_inputs: {\n        config_node: \"201_115200_tcp_rtu_dig_inp\",\n        unitid: 11,\n        channels: {        \n          oxygen_detector_dig_alr_1: {map: 0, pro: {oxygen_detector_dig: \"off\"}},\n          oxygen_detector_dig_alr_2: {map: 1, pro: {oxygen_detector_dig: \"on\"}},\n          humidity_detector_dig_alr_1: {map: 2, pro: {humidity_detector_dig: \"off\"}},\n          humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: \"on\"}},\n          roof_forward_limit: {map: 4},\n          roof_reverse_limit: {map: 5},\n          cabinet_door: {map: 6},\n          stop_button: {map: 15}\n        }      \n      },\n      analog_inputs: {\n        config_node: \"204_9600_tcp_rtu_ang_inp_eng_met\",\n        unitid: 12,        \n        channels: {\n          oxygen: {map: 0, change: 0.2, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0.5, out_max: 20.9}, pro: {oxygen_detector_ang: {off: 3.2, on: 14.7}}},\n          humidity: {map: 1, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {off: 30, on: 60}}}\n        }\n      },\n      relay_outputs_1: {\n        config_node: \"203_115200_tcp_rtu_rel_out\",\n        unitid: 13,\n        channels: {\n          light: {map: 6},\n          buzzer: {map: 7}\n        }\n      },\n      relay_outputs_2: {\n        config_node: \"203_115200_tcp_rtu_rel_out\",\n        unitid: 14,\n        channels: {\n          loader_forward_valve: {map: 4, group: \"loader\"},\n          loader_reverse_valve: {map: 5, group: \"loader\"},\n          loader_motor: {map: 6, group: \"loader\"},\n          power_contactor: {map: 7}\n        }\n      }\n    },\n    energy_meter: {\n      config_node: \"204_9600_tcp_rtu_ang_inp_eng_met\",\n      unitid: 2,      \n      channels: {\n        kwh: {map: 0, factor: 0.01, change: 2, pro: {kwh_detector: {off: 30, on: 60}}}\n      }\n    },  \n    sinamics: {\n      config_node: \"202_9600_tcp_rtu_sinamics\",\n      command_words: {forward_on: 1279, reverse_on: 3327, off: 1278},\n      speed_max: 16384, // modbus send >> set_point / 100 * speed_max\n      channels: {\n        roof: {unitid: 11},\n        fan: {unitid: 12},\n        water_pump: {unitid: 13},\n        discharger: {unitid: 14}\n      }\n    },\n    timers: {      \n      fan_pwm: {\n        form: \"pwm\",\n        t_duty: 10, t_cycle: 180, unit: \"min\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"forward_on\", target: \"fan\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"fan\"}, port: 2}\n        }\n      },\n      water_pump_pwm: {\n        form: \"pwm\",\n        t_duty: 15, t_cycle: 360, unit: \"min\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"forward_on\", target: \"water_pump\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"water_pump\"}, port: 2}\n        }\n      },\n      light_pulse: {\n        form: \"delay\", duration: 2, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"light\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"light\"}, port: 2}\n        }\n      },\n      light_pwm: {\n        form: \"pwm\", t_duty: 2, t_cycle: 5, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"light\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"light\"}, port: 2}\n        }        \n      },\n      buzzer_pulse: {\n        form: \"delay\", duration: 2, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"buzzer\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"buzzer\"}, port: 2}\n        }\n      },\n      buzzer_pwm: {\n        form: \"pwm\", t_duty: 2, t_cycle: 5, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"buzzer\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"buzzer\"}, port: 2}\n        }        \n      },\n      day_counter: {\n        form: \"counter\", direction: \"down\", interval: 1, base: 21, signal: 3, unit: \"d\",\n        pass: {\n          2: {method: \"cmd\", params: {type: \"dry\", target: \"fsm\"}, port: 1},\n          3: {method: \"cmd\", params: {type: \"end\", target: \"fsm\"}, port: 1},\n          4: {method: \"evt\", params: {type: \"day\"}, port: 3} // val buradan sabit gelmeyecek\n        }             \n      },\n      telemetry_periodical: {\n        form: \"loop\", interval: 2, unit: \"min\",\n        pass: {\n          1: {method: \"evt\", params: {type: \"telemetry_periodical\", val: null}, port: 3}\n        }        \n      }\n    }\n  },\n  runtime: {\n    oxygen_detector_dig_alr_1: {val: \"on\"},\n    oxygen_detector_dig_alr_2: {val: \"on\"},\n    humidity_detector_dig_alr_1: {val: \"on\"},\n    humidity_detector_dig_alr_2: {val: \"on\"},\n    roof_forward_limit: {val: \"on\"},\n    roof_reverse_limit: {val: \"on\"},\n    cabinet_door: {val: \"off\"},\n    stop_button: {val: \"off\"},\n    oxygen: {val: 0},\n    humidity: {val: 0}, \n    loader_forward_valve: {val: \"off\"},\n    loader_reverse_valve: {val: \"off\"},\n    loader_motor: {val: \"off\"},\n    power_contactor: {val: \"off\"},\n    light: {val: \"off\"},\n    buzzer: {val: \"off\"},  \n    roof: {speed: {set_point: 100}, val: \"off\"},\n    fan: {speed: {set_point: 100}, val: \"off\"},\n    water_pump: {speed: {set_point: 100}, val: \"off\"},\n    discharger: {speed: {set_point: 100}, val: \"off\"},\n    loader: {val: \"off\"},\n    kwh: {val: 0},\n    oxygen_detector_dig: {val: \"off\"},\n    oxygen_detector_ang: {val: \"off\"},\n    humidity_detector_dig: {val: \"off\"},\n    humidity_detector_ang: {val: \"off\"},\n    kwh_detector: {val: \"off\"},\n    fsm: {val: \"end\"}\n  }\n}\n\nflow.set(\"flow\", flowData);\n\nreturn msg;\n",
+        "func": "const payload = msg.payload || {};\nconst method = payload.method || \"\";\nconst params = payload.params || {};\n\nif (!(method === \"cmd\" && params.type === \"inject\" && params.target === \"flow_context\")) {\n    return null; // diğer tüm mesajları görmezden gel\n}\n\nconst flowData = {\n  config: {\n    labels: {true: \"on\", false: \"off\"},\n    io: {\n      queue_interval: 50,\n      digital_inputs: {\n        config_node: \"201_115200_tcp_rtu_dig_inp\",\n        unitid: 11,\n        channels: {        \n          oxygen_detector_dig_alr_1: {map: 0, pro: {oxygen_detector_dig: \"off\"}},\n          oxygen_detector_dig_alr_2: {map: 1, pro: {oxygen_detector_dig: \"on\"}},\n          humidity_detector_dig_alr_1: {map: 2, pro: {humidity_detector_dig: \"off\"}},\n          humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: \"on\"}},\n          roof_forward_limit: {map: 4},\n          roof_reverse_limit: {map: 5},\n          cabinet_door: {map: 6},\n          stop_button: {map: 15}\n        }      \n      },\n      analog_inputs: {\n        config_node: \"204_9600_tcp_rtu_ang_inp_eng_met\",\n        unitid: 12,        \n        channels: {\n          oxygen: {map: 0, change: 0.2, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0.5, out_max: 20.9}, pro: {oxygen_detector_ang: {off: 3.2, on: 14.7}}},\n          humidity: {map: 1, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {off: 30, on: 60}}}\n        }\n      },\n      relay_outputs_1: {\n        config_node: \"203_115200_tcp_rtu_rel_out\",\n        unitid: 13,\n        channels: {\n          light: {map: 6},\n          buzzer: {map: 7}\n        }\n      },\n      relay_outputs_2: {\n        config_node: \"203_115200_tcp_rtu_rel_out\",\n        unitid: 14,\n        channels: {\n          loader_forward_valve: {map: 4, group: \"loader\"},\n          loader_reverse_valve: {map: 5, group: \"loader\"},\n          loader_motor: {map: 6, group: \"loader\"},\n          power_contactor: {map: 7}\n        }\n      },\n      relay_groups: {\n        loader: {\n          loader_motor: null,\n          loader_forward_valve: null,\n          loader_reverse_valve: null    \n        }\n      }\n    },\n    energy_meter: {\n      config_node: \"204_9600_tcp_rtu_ang_inp_eng_met\",\n      unitid: 2,      \n      channels: {\n        kwh: {map: 0, factor: 0.01, change: 2, pro: {kwh_detector: {off: 30, on: 60}}}\n      }\n    },  \n    sinamics: {\n      config_node: \"202_9600_tcp_rtu_sinamics\",\n      channels: {\n        roof: {unitid: 11},\n        fan: {unitid: 12},\n        water_pump: {unitid: 13},\n        discharger: {unitid: 14}\n      },\n      command_words: {forward: 1151, reverse: 3199, off: 1150, fault_ack_res: 1150, fault_ack_set: 1278},\n      status_word: {\n        work: {map: 2},\n        fault: {map: 3},\n        warning: {map: 7},\n        direction: {map: 14}\n      },\n      speed_max: 16384, // modbus send >> set_point / 100 * speed_max\n      queue_interval: 50,\n      power_up_time: 10000\n    },\n    timers: {      \n      fan_pwm: {\n        form: \"pwm\",\n        t_duty: 10, t_cycle: 180, unit: \"min\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"forward\", target: \"fan\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"fan\"}, port: 2}\n        }\n      },\n      water_pump_pwm: {\n        form: \"pwm\",\n        t_duty: 15, t_cycle: 360, unit: \"min\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"forward\", target: \"water_pump\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"water_pump\"}, port: 2}\n        }\n      },\n      light_pulse: {\n        form: \"delay\", duration: 2, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"light\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"light\"}, port: 2}\n        }\n      },\n      light_pwm: {\n        form: \"pwm\", t_duty: 2, t_cycle: 5, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"light\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"light\"}, port: 2}\n        }        \n      },\n      buzzer_pulse: {\n        form: \"delay\", duration: 2, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"buzzer\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"buzzer\"}, port: 2}\n        }\n      },\n      buzzer_pwm: {\n        form: \"pwm\", t_duty: 2, t_cycle: 5, unit: \"s\",\n        pass: {\n          1: {method: \"cmd\", params: {type: \"on\", target: \"buzzer\"}, port: 2},\n          2: {method: \"cmd\", params: {type: \"off\", target: \"buzzer\"}, port: 2}\n        }        \n      },\n      day_counter: {\n        form: \"counter\", direction: \"down\", interval: 1, base: 21, signal: 3, unit: \"d\",\n        pass: {\n          2: {method: \"cmd\", params: {type: \"dry\", target: \"fsm\"}, port: 1},\n          3: {method: \"cmd\", params: {type: \"end\", target: \"fsm\"}, port: 1},\n          4: {method: \"evt\", params: {type: \"day\"}, port: 3} // val buradan sabit gelmeyecek\n        }             \n      }\n    }\n  },\n  runtime: {\n    oxygen_detector_dig_alr_1: {val: \"on\"},\n    oxygen_detector_dig_alr_2: {val: \"on\"},\n    humidity_detector_dig_alr_1: {val: \"on\"},\n    humidity_detector_dig_alr_2: {val: \"on\"},\n    roof_forward_limit: {val: \"on\"},\n    roof_reverse_limit: {val: \"on\"},\n    cabinet_door: {val: \"on\"},\n    stop_button: {val: \"on\"},\n    oxygen: {val: 0},\n    humidity: {val: 0}, \n    loader_forward_valve: {val: \"off\"},\n    loader_reverse_valve: {val: \"off\"},\n    loader_motor: {val: \"off\"},\n    power_contactor: {val: \"off\"},\n    light: {val: \"off\"},\n    buzzer: {val: \"off\"},  \n    roof: {speed: {set_point: 100}, val: \"off\"},\n    fan: {speed: {set_point: 100}, val: \"off\"},\n    water_pump: {speed: {set_point: 100}, val: \"off\"},\n    discharger: {speed: {set_point: 100}, val: \"off\"},\n    loader: {val: \"off\"},\n    kwh: {val: 0},\n    oxygen_detector_dig: {val: \"off\"},\n    oxygen_detector_ang: {val: \"off\"},\n    humidity_detector_dig: {val: \"off\"},\n    humidity_detector_ang: {val: \"off\"},\n    kwh_detector: {val: \"off\"},\n    fsm: {val: \"end\"}\n  }\n}\n\nflow.set(\"flow\", flowData);\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -445,7 +446,7 @@
         "finalize": "",
         "libs": [],
         "x": 350,
-        "y": 180,
+        "y": 220,
         "wires": [
             [
                 "beb4346081038e85"
@@ -470,7 +471,7 @@
         "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"inject\", \"target\": \"flow_context\"}}",
         "payloadType": "json",
         "x": 130,
-        "y": 180,
+        "y": 220,
         "wires": [
             [
                 "c3f4a0e8f8030852"
@@ -482,15 +483,15 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "timer_manager",
-        "func": "const flowData = flow.get(\"flow\");\nconst timers = flowData.config.timers;\n\nconst method = msg?.payload?.method || msg?.method;\nconst params = msg?.payload?.params || msg?.params || {};\nconst target = params.target;\nconst type = params.type;\n\nconst out = [[], [], []]; // Port 1,2,3\nlet runtime = context.get(\"runtime\") || {};\n\nfunction toMs(val, unit) {\n  const map = { s: 1000, min: 60000, h: 3600000, d: 86400000 };\n  return val * (map[unit] ?? 1000);\n}\n\nfunction pushMessage(timer, passKey, out, runtime = {}, target = null) {\n  const entry = timer.pass?.[passKey];\n  if (!entry) return;\n\n  const message = RED.util.cloneMessage(entry);\n  const port = (entry.port ?? 0) - 1;\n  if (port < 0 || port > 2) return;\n\n  delete message.port;\n\n  if (message.params && target && runtime[target]) {\n    for (const [key, val] of Object.entries(message.params)) {\n      if (val === null && runtime[target][key] !== undefined) {\n        message.params[key] = runtime[target][key];\n      } else if (typeof val === \"object\" && val !== null && \"val\" in val) {\n        message.params[key].val = runtime[target].count;\n      }\n    }\n\n    if (timer.form === \"counter\" && passKey === 4 && message.params.val === undefined) {\n      message.params.val = runtime[target].count;\n    }\n  }\n\n  out[port].push({ payload: message });\n}\n\nfunction timerOn(timer, rt, now, out, target, forcedCount = null) {\n  rt.state = \"on\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.on_time = now;\n      rt.done = false;\n      rt.phase_until = now + toMs(timer.duration, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"pwm\":\n      rt.on_time = now;\n      rt.phase = \"a\";\n      rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"loop\":\n      rt.on_time = now;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.on_time = now;\n      rt.count = forcedCount !== null ? forcedCount : timer.base;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n\n      const entry4 = timer.pass?.[4];\n      if (entry4) {\n        entry4.params = entry4.params || {};\n        // ÖNEMLİ: sabit değer atamak yerine val özelliğini sil\n        // böylece pushMessage her seferinde runtime[target].count koyar\n        delete entry4.params.val;\n      }\n\n      pushMessage(timer, 1, out, runtime, target);\n      pushMessage(timer, 4, out, runtime, target);\n      break;\n  }\n}\n\nfunction timerOff(timer, rt, out, target, suppressMessages = false) {\n  rt.state = \"off\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.done = true;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"pwm\":\n      rt.phase = null;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"loop\":\n      if (!suppressMessages) pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.count = 0;\n      if (!suppressMessages) {\n        pushMessage(timer, 3, out, runtime, target);\n        pushMessage(timer, 4, out, runtime, target);\n      }\n\n      // day_counter için evt day 0 mesajı her koşulda\n      if (target === \"day_counter\") {\n        out[2].push({\n          payload: {\n            method: \"evt\",\n            params: { type: \"day\", val: 0 }\n          }\n        });\n      }\n      break;\n  }\n\n  // Genel reset: runtime içindeki yardımcı alanlar\n  rt.on_time = null;\n  rt.next_time = null;\n  rt.phase_until = null;\n  rt.phase = null;\n}\n\nfunction timerTick(timers, runtime, now, out) {\n  for (const [key, timer] of Object.entries(timers)) {\n    const rt = runtime[key];\n    if (!rt || rt.state !== \"on\") continue;\n\n    switch (timer.form) {\n      case \"delay\":\n        if (!rt.done && now >= rt.phase_until) {\n          rt.done = true;\n          pushMessage(timer, 2, out);\n        }\n        break;\n\n      case \"pwm\":\n        if (now >= rt.phase_until) {\n          if (rt.phase === \"a\") {\n            rt.phase = \"b\";\n            rt.phase_until = now + toMs(timer.t_cycle - timer.t_duty, timer.unit);\n            pushMessage(timer, 2, out);\n          } else {\n            rt.phase = \"a\";\n            rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n            pushMessage(timer, 1, out);\n          }\n        }\n        break;\n\n      case \"loop\":\n        if (now >= rt.next_time) {\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n          pushMessage(timer, 1, out);\n        }\n        break;\n\n      case \"counter\":\n        if (now >= rt.next_time && rt.count > 0) {\n          rt.count -= 1;\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n\n          if (timer.signal !== undefined && rt.count === timer.signal) {\n            pushMessage(timer, 2, out, runtime, key);\n          }\n\n          pushMessage(timer, 4, out, runtime, key);\n\n          if (rt.count === 0) {\n            rt.state = \"off\";\n            pushMessage(timer, 3, out, runtime, key);\n\n            // Son kalan gün evt day 0 mesajı\n            if (key === \"day_counter\") {\n              out[2].push({\n                payload: {\n                  method: \"evt\",\n                  params: { type: \"day\", val: 0 }\n                }\n              });\n            }\n\n            // Reset runtime yardımcı alanlar\n            rt.on_time = null;\n            rt.next_time = null;\n            rt.phase_until = null;\n            rt.phase = null;\n          }\n        }\n        break;\n    }\n  }\n}\n\n// --- CMD handling ---\nif (method === \"cmd\") {\n  // --- Special skip for day_counter ---\n  if (type === \"skip\" && target === \"day_counter\") {\n    if (!runtime[target]) runtime[target] = {};\n    const rt = runtime[target];\n\n    // day_counter'ı signal anına getir ve timerOn gibi başlat\n    timerOn(timers[target], rt, Date.now(), out, target, timers[target].signal);\n\n  } else if (timers[target]) {\n    if (!runtime[target]) runtime[target] = {};\n    if (type === \"on\") {\n      timerOn(timers[target], runtime[target], Date.now(), out, target);\n    } else if (type === \"off\") {\n      timerOff(timers[target], runtime[target], out, target);\n    }\n  } else if (type === \"off\" && target === \"timers\") {\n    for (const [key, timer] of Object.entries(timers)) {\n      if (key === \"telemetry_periodical\") continue;\n      if (!runtime[key]) runtime[key] = {};\n      timerOff(timer, runtime[key], out, key, true);\n    }\n  } else {\n    out[1].push(msg);\n  }\n\n} else if (method === \"evt\" && type === \"timer_tick\") {\n  timerTick(timers, runtime, Date.now(), out);\n} else {\n  out[1].push(msg);\n}\n\ncontext.set(\"runtime\", runtime);\n\nreturn out.some(arr => arr.length) ? out : null;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst timers = flowData.config.timers;\n\nconst method = msg?.payload?.method || msg?.method;\nconst params = msg?.payload?.params || msg?.params || {};\nconst target = params.target;\nconst type = params.type;\n\nconst out = [[], [], []]; // Port 1,2,3\nlet runtime = context.get(\"runtime\") || {};\n\nfunction toMs(val, unit) {\n  const map = { s: 1000, min: 60000, h: 3600000, d: 86400000 };\n  return val * (map[unit] ?? 1000);\n}\n\nfunction pushMessage(timer, passKey, out, runtime = {}, target = null) {\n  const entry = timer.pass?.[passKey];\n  if (!entry) return;\n\n  const message = RED.util.cloneMessage(entry);\n  const port = (entry.port ?? 0) - 1;\n  if (port < 0 || port > 2) return;\n\n  delete message.port;\n\n  if (message.params && target && runtime[target]) {\n    for (const [key, val] of Object.entries(message.params)) {\n      if (val === null && runtime[target][key] !== undefined) {\n        message.params[key] = runtime[target][key];\n      } else if (typeof val === \"object\" && val !== null && \"val\" in val) {\n        message.params[key].val = runtime[target].count;\n      }\n    }\n\n    if (timer.form === \"counter\" && passKey === 4 && message.params.val === undefined) {\n      message.params.val = runtime[target].count;\n    }\n  }\n\n  out[port].push({ payload: message });\n}\n\nfunction timerOn(timer, rt, now, out, target, forcedCount = null) {\n  rt.state = \"on\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.on_time = now;\n      rt.done = false;\n      rt.phase_until = now + toMs(timer.duration, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"pwm\":\n      rt.on_time = now;\n      rt.phase = \"a\";\n      rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n      pushMessage(timer, 1, out);\n      break;\n\n    case \"counter\":\n      rt.on_time = now;\n      rt.count = forcedCount !== null ? forcedCount : timer.base;\n      rt.next_time = now + toMs(timer.interval, timer.unit);\n\n      const entry4 = timer.pass?.[4];\n      if (entry4) {\n        entry4.params = entry4.params || {};\n        delete entry4.params.val; // runtime[target].count koyabilmesi için\n      }\n\n      pushMessage(timer, 1, out, runtime, target);\n      pushMessage(timer, 4, out, runtime, target);\n      break;\n  }\n}\n\nfunction timerOff(timer, rt, out, target, suppressMessages = false) {\n  rt.state = \"off\";\n\n  switch (timer.form) {\n    case \"delay\":\n      rt.done = true;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"pwm\":\n      rt.phase = null;\n      if (!suppressMessages) pushMessage(timer, 2, out);\n      break;\n\n    case \"counter\":\n      rt.count = 0;\n      if (!suppressMessages) {\n        pushMessage(timer, 3, out, runtime, target);\n        pushMessage(timer, 4, out, runtime, target);\n      }\n\n      // day_counter için evt day 0 mesajı\n      if (target === \"day_counter\") {\n        out[2].push({\n          payload: {\n            method: \"evt\",\n            params: { type: \"day\", val: 0 }\n          }\n        });\n      }\n      break;\n  }\n\n  // Genel reset\n  rt.on_time = null;\n  rt.next_time = null;\n  rt.phase_until = null;\n  rt.phase = null;\n}\n\nfunction timerTick(timers, runtime, now, out) {\n  for (const [key, timer] of Object.entries(timers)) {\n    const rt = runtime[key];\n    if (!rt || rt.state !== \"on\") continue;\n\n    switch (timer.form) {\n      case \"delay\":\n        if (!rt.done && now >= rt.phase_until) {\n          rt.done = true;\n          pushMessage(timer, 2, out);\n        }\n        break;\n\n      case \"pwm\":\n        if (now >= rt.phase_until) {\n          if (rt.phase === \"a\") {\n            rt.phase = \"b\";\n            rt.phase_until = now + toMs(timer.t_cycle - timer.t_duty, timer.unit);\n            pushMessage(timer, 2, out);\n          } else {\n            rt.phase = \"a\";\n            rt.phase_until = now + toMs(timer.t_duty, timer.unit);\n            pushMessage(timer, 1, out);\n          }\n        }\n        break;\n\n      case \"counter\":\n        if (now >= rt.next_time && rt.count > 0) {\n          rt.count -= 1;\n          rt.next_time = now + toMs(timer.interval, timer.unit);\n\n          if (timer.signal !== undefined && rt.count === timer.signal) {\n            pushMessage(timer, 2, out, runtime, key);\n          }\n\n          pushMessage(timer, 4, out, runtime, key);\n\n          if (rt.count === 0) {\n            rt.state = \"off\";\n            pushMessage(timer, 3, out, runtime, key);\n\n            if (key === \"day_counter\") {\n              out[2].push({\n                payload: {\n                  method: \"evt\",\n                  params: { type: \"day\", val: 0 }\n                }\n              });\n            }\n\n            rt.on_time = null;\n            rt.next_time = null;\n            rt.phase_until = null;\n            rt.phase = null;\n          }\n        }\n        break;\n    }\n  }\n}\n\n// --- CMD handling ---\nif (method === \"cmd\") {\n  // --- Special skip for day_counter ---\n  if (type === \"skip\" && target === \"day_counter\") {\n    if (!runtime[target]) runtime[target] = {};\n    const rt = runtime[target];\n\n    timerOn(timers[target], rt, Date.now(), out, target, timers[target].signal);\n\n  } else if (timers[target]) {\n    if (!runtime[target]) runtime[target] = {};\n    if (type === \"on\") {\n      timerOn(timers[target], runtime[target], Date.now(), out, target);\n    } else if (type === \"off\") {\n      timerOff(timers[target], runtime[target], out, target);\n    }\n  } else if (type === \"off\" && target === \"timers\") {\n    for (const [key, timer] of Object.entries(timers)) {\n      if (!runtime[key]) runtime[key] = {};\n      timerOff(timer, runtime[key], out, key, true);\n    }\n  } else {\n    out[1].push(msg);\n  }\n\n} else if (method === \"evt\" && type === \"timer_tick\") {\n  timerTick(timers, runtime, Date.now(), out);\n} else {\n  out[1].push(msg);\n}\n\ncontext.set(\"runtime\", runtime);\n\nreturn out.some(arr => arr.length) ? out : null;\n",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1040,
-        "y": 520,
+        "x": 1120,
+        "y": 400,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -498,8 +499,8 @@
             ],
             [
                 "eabb49f6ea664cdf",
-                "c6751ebfbed920fc",
-                "d8c51a71cc91d064"
+                "8b077bd685e2a66c",
+                "d7108d799a8d52c2"
             ],
             [
                 "0b3654ab51cfd27c",
@@ -524,8 +525,8 @@
         "topic": "",
         "payload": "{\"method\": \"evt\", \"params\": {\"type\": \"timer_tick\", \"val\": null}}",
         "payloadType": "json",
-        "x": 850,
-        "y": 500,
+        "x": 1110,
+        "y": 340,
         "wires": [
             [
                 "8701a07643f54a7b"
@@ -537,7 +538,7 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "fsm",
-        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.val;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.val = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(\"fsm\", { val: currentState });\n  }\n}\n\nfunction sendCmd(type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[0].push(msg);\n}\n\nfunction sendEvt(type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_ang\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"stop_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n      if (runtime.humidity_detector_ang.val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (runtime.humidity_detector_ang.val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n      sendCmd(\"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(\"skip\", \"day_counter\");\n      sendCmd(\"on\", \"fan_pwm\");\n      sendCmd(\"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(\"off\", \"timers\");\n      sendCmd(\"off\", \"actuators\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward_on\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return null;\n      }\n    } else if (type === \"reverse_on\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return null;\n      }\n    }\n    outputs[0].push(msg);     \n    \n  } else {\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
+        "func": "const flowData = flow.get(\"flow\");\nconst runtime = flowData.runtime;\nlet currentState = runtime.fsm.val;\n\nconst payload = msg.payload;\nif (!payload || typeof payload !== \"object\") return null;\n\nconst method = payload.method;\nconst params = payload.params || {};\nconst type = params.type;\nconst target = params.target;\nconst val = params.val;\n\nconst outputs = [[], []];\n\nfunction transition(toState) {\n  if (toState !== currentState) {\n    currentState = toState;\n    flowData.runtime.fsm.val = currentState;\n    flow.set(\"flow\", flowData);\n    sendEvt(\"fsm\", { val: currentState });\n  }\n}\n\nfunction sendCmd(type, target, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"cmd\",\n      params: { type, target, ...extraParams }\n    }\n  };\n  outputs[0].push(msg);\n}\n\nfunction sendEvt(type, extraParams = {}) {\n  const msg = {\n    payload: {\n      method: \"evt\",\n      params: { type, ...extraParams }\n    }\n  };\n  outputs[1].push(msg);\n}\n\n// --- Ana mesaj işleme ---\nif (method === \"evt\") {\n\n  if (type === \"oxygen_detector_dig\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n    }\n\n  } else if (type === \"humidity_detector_ang\") {\n    if (currentState === \"start\") {\n      if (val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n    }\n\n  } else if (type === \"roof_forward_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"roof_reverse_limit\") {\n    if (val === \"off\") {\n      sendCmd(\"off\", \"roof\");\n    }\n\n  } else if (type === \"cabinet_door\") {\n    // boş\n\n  } else if (type === \"stop_button\") {\n    // boş\n  }\n\n} else if (method === \"cmd\") {\n\n  if (target === \"fsm\") {\n\n    if (type === \"start\") {\n      if (runtime.oxygen_detector_dig.val === \"off\") {\n        sendCmd(\"on\", \"fan_pwm\");\n      } else if (runtime.oxygen_detector_dig.val === \"on\") {\n        sendCmd(\"off\", \"fan_pwm\");\n      }\n      if (runtime.humidity_detector_ang.val === \"off\") {\n        sendCmd(\"on\", \"water_pump_pwm\");\n      } else if (runtime.humidity_detector_ang.val === \"on\") {\n        sendCmd(\"off\", \"water_pump_pwm\");\n      }\n      sendCmd(\"on\", \"day_counter\");\n      transition(\"start\");\n\n    } else if (type === \"dry\") {\n      sendCmd(\"skip\", \"day_counter\");\n      sendCmd(\"on\", \"fan_pwm\");\n      sendCmd(\"off\", \"water_pump_pwm\");\n      transition(\"dry\");\n\n    } else if (type === \"end\") {\n      sendCmd(\"off\", \"timers\");\n      sendCmd(\"off\", \"actuators\");\n      transition(\"end\");\n    }\n\n  } else if (target === \"roof\") {\n\n    if (type === \"forward\") {\n      if (runtime.roof_forward_limit.val === \"off\") {\n        return null;\n      }\n    } else if (type === \"reverse\") {\n      if (runtime.roof_reverse_limit.val === \"off\") {\n        return null;\n      }\n    }\n    outputs[0].push(msg);     \n    \n  } else {\n    outputs[0].push(msg);\n  }\n}\n\nreturn outputs;\n",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
@@ -545,7 +546,7 @@
         "finalize": "",
         "libs": [],
         "x": 870,
-        "y": 320,
+        "y": 360,
         "wires": [
             [
                 "8701a07643f54a7b",
@@ -562,15 +563,15 @@
         "type": "function",
         "z": "2d8538969c77a5df",
         "name": "mqtt_manager",
-        "func": "// Sabitler\nconst TELEMETRY_TOPIC = \"v1/devices/me/telemetry\";\nconst RPC_RESPONSE_PREFIX = \"v1/devices/me/rpc/response/\";\n\nconst topic = msg.topic || \"\";\nconst payload = msg.payload || {};\nconst method = payload?.method || \"\";\nconst params = payload?.params || {};\n\nconst flowData = flow.get(\"flow\") || {};\n\n// Güvenli msgId\nconst msgId = (topic.split(\"/\").pop()) || \"unknown\";\n\nfunction getValueAtPath(obj, path) {\n    if (!Array.isArray(path) || path.length === 0) return obj;\n    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : null), obj);\n}\n\nfunction setValueAtPath(obj, path, value) {\n    if (!Array.isArray(path) || path.length === 0) {\n        throw new Error(\"Invalid path for set\");\n    }\n    let current = obj;\n    for (let i = 0; i < path.length - 1; i++) {\n        const key = path[i];\n        if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {\n            current[key] = {};\n        }\n        current = current[key];\n    }\n    current[path[path.length - 1]] = value;\n}\n\nfunction buildRpcResponse(id, content) {\n    return {\n        topic: RPC_RESPONSE_PREFIX + id,\n        payload: content\n    };\n}\n\nfunction buildTelemetryMsg(content) {\n    return {\n        topic: TELEMETRY_TOPIC,\n        payload: content\n    };\n}\n\n// 1) EVT — esnek versiyon\nif (method === \"evt\") {\n    const subType = params?.type;\n\n    // subtype = telemetry_periodical → flowData.runtime\n    if (subType === \"telemetry_periodical\") {\n        return [buildTelemetryMsg(flowData.runtime || {}), null, null];\n    }\n\n    // Geri kalan tüm evt’ler için esnek format:\n    // params.type dışındaki her şeyi otomatik kapsar\n    if (subType) {\n        // type dışındaki tüm alanları bir objeye kopyala\n        const { type, ...rest } = params;\n        // örn. { motor1: {x:10,y:20,speed:100}} gibi\n        const formatted = { [subType]: rest };\n        return [buildTelemetryMsg(formatted), null, null];\n    }\n\n    // params.type yoksa: params doğrudan telemetry payload olarak gönderilir\n    return [buildTelemetryMsg(params), null, null];\n}\n\n// 2) CMD\nif (method === \"cmd\") {\n    // Özel \"inject → flow_context\" komutu kontrolü\n    if (params?.type === \"inject\" && params?.target === \"flow_context\") {\n        return [buildRpcResponse(msgId, { response: true }), null, { payload }];\n    }\n    // Normal cmd\n    return [buildRpcResponse(msgId, { response: true }), { payload }, null];\n}\n\n// 3) set/get tipi dot-path'li method'lar\nconst [action, ...pathParts] = method.split(\".\");\n\nif (action === \"get\") {\n    try {\n        const value = getValueAtPath(flowData, pathParts);\n        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null, null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null, null];\n    }\n}\n\nif (action === \"set\") {\n    try {\n        if (!pathParts || pathParts.length === 0) {\n            return [buildRpcResponse(msgId, { error: \"Invalid set path\" }), null, null];\n        }\n        const newValue = params?.value;\n        setValueAtPath(flowData, pathParts, newValue);\n        flow.set(\"flow\", flowData);\n        return [buildRpcResponse(msgId, { response: true }), null, null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null, null];\n    }\n}\n\n// Bilinmeyen method'lar\nreturn [null, null, null];\n",
+        "func": "// Sabitler\nconst TELEMETRY_TOPIC = \"v1/devices/me/telemetry\";\nconst RPC_RESPONSE_PREFIX = \"v1/devices/me/rpc/response/\";\n\nconst topic = msg.topic || \"\";\nconst payload = msg.payload || {};\nconst method = payload?.method || \"\";\nconst params = payload?.params || {};\n\nconst flowData = flow.get(\"flow\") || {};\n\n// Güvenli msgId\nconst msgId = (topic.split(\"/\").pop()) || \"unknown\";\n\nfunction getValueAtPath(obj, path) {\n    if (!Array.isArray(path) || path.length === 0) return obj;\n    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : null), obj);\n}\n\nfunction setValueAtPath(obj, path, value) {\n    if (!Array.isArray(path) || path.length === 0) {\n        throw new Error(\"Invalid path for set\");\n    }\n    let current = obj;\n    for (let i = 0; i < path.length - 1; i++) {\n        const key = path[i];\n        if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {\n            current[key] = {};\n        }\n        current = current[key];\n    }\n    current[path[path.length - 1]] = value;\n}\n\nfunction buildRpcResponse(id, content) {\n    return {\n        topic: RPC_RESPONSE_PREFIX + id,\n        payload: content\n    };\n}\n\nfunction buildTelemetryMsg(content) {\n    return {\n        topic: TELEMETRY_TOPIC,\n        payload: content\n    };\n}\n\n// 1) EVT — esnek versiyon\nif (method === \"evt\") {\n    const subType = params?.type;\n\n    // Geri kalan tüm evt’ler için esnek format:\n    // params.type dışındaki her şeyi otomatik kapsar\n    if (subType) {\n        // type dışındaki tüm alanları bir objeye kopyala\n        const { type, ...rest } = params;\n        // örn. { motor1: {x:10,y:20,speed:100}} gibi\n        const formatted = { [subType]: rest };\n        return [buildTelemetryMsg(formatted), null, null];\n    }\n\n    // params.type yoksa: params doğrudan telemetry payload olarak gönderilir\n    return [buildTelemetryMsg(params), null, null];\n}\n\n// 2) CMD\nif (method === \"cmd\") {\n    // Özel \"inject → flow_context\" komutu kontrolü\n    if (params?.type === \"inject\" && params?.target === \"flow_context\") {\n        return [buildRpcResponse(msgId, { response: true }), null, { payload }];\n    }\n    // Normal cmd\n    return [buildRpcResponse(msgId, { response: true }), { payload }, null];\n}\n\n// 3) set/get tipi dot-path'li method'lar\nconst [action, ...pathParts] = method.split(\".\");\n\nif (action === \"get\") {\n    try {\n        const value = getValueAtPath(flowData, pathParts);\n        return [buildRpcResponse(msgId, { value: value === undefined ? null : value }), null, null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null, null];\n    }\n}\n\nif (action === \"set\") {\n    try {\n        if (!pathParts || pathParts.length === 0) {\n            return [buildRpcResponse(msgId, { error: \"Invalid set path\" }), null, null];\n        }\n        const newValue = params?.value;\n        setValueAtPath(flowData, pathParts, newValue);\n        flow.set(\"flow\", flowData);\n        return [buildRpcResponse(msgId, { response: true }), null, null];\n    } catch (err) {\n        return [buildRpcResponse(msgId, { error: err.message }), null, null];\n    }\n}\n\n// Bilinmeyen method'lar\nreturn [null, null, null];\n",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1060,
-        "y": 180,
+        "x": 1120,
+        "y": 220,
         "wires": [
             [
                 "b7b87a40dd91a021",
@@ -599,7 +600,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 360,
+        "y": 400,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -622,11 +623,12 @@
         "finalize": "",
         "libs": [],
         "x": 610,
-        "y": 440,
+        "y": 480,
         "wires": [
             [
                 "22442867c06e05b8",
-                "0b3654ab51cfd27c"
+                "0b3654ab51cfd27c",
+                "67baacaa5c302e79"
             ]
         ]
     },
@@ -643,7 +645,7 @@
         "finalize": "",
         "libs": [],
         "x": 590,
-        "y": 280,
+        "y": 320,
         "wires": [
             [
                 "22442867c06e05b8",
@@ -655,7 +657,7 @@
         "id": "890e808611421ece",
         "type": "modbus-flex-getter",
         "z": "2d8538969c77a5df",
-        "name": "get_analog_inputs",
+        "name": "analog_inputs_getter",
         "showStatusActivities": false,
         "showErrors": false,
         "showWarnings": true,
@@ -668,8 +670,8 @@
         "keepMsgProperties": false,
         "delayOnStart": false,
         "startDelayTime": "",
-        "x": 370,
-        "y": 300,
+        "x": 380,
+        "y": 340,
         "wires": [
             [
                 "db72d07653f1bbe9"
@@ -695,7 +697,7 @@
         "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"power\"}}",
         "payloadType": "json",
         "x": 880,
-        "y": 360,
+        "y": 400,
         "wires": [
             [
                 "22442867c06e05b8"
@@ -703,86 +705,10 @@
         ]
     },
     {
-        "id": "7701af895b46dbeb",
-        "type": "inject",
-        "z": "2d8538969c77a5df",
-        "name": "telemetry",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": "60",
-        "topic": "",
-        "payload": "{\"method\": \"cmd\", \"params\": {\"type\": \"on\", \"target\": \"telemetry_periodical\"}}",
-        "payloadType": "json",
-        "x": 840,
-        "y": 540,
-        "wires": [
-            [
-                "8701a07643f54a7b"
-            ]
-        ]
-    },
-    {
-        "id": "1c798b44f6d4353a",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "relays_1",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1290,
-        "y": 580,
-        "wires": []
-    },
-    {
-        "id": "7ccdddabf54a9ffe",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "relays_2",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1290,
-        "y": 620,
-        "wires": []
-    },
-    {
-        "id": "86a9ac90f6c99b53",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "sinamics_1",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1300,
-        "y": 660,
-        "wires": []
-    },
-    {
         "id": "1fdf1ec66afd9b22",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "digital_inputs_x",
+        "name": "digital_inputs_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -791,32 +717,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 610,
-        "y": 480,
+        "x": 620,
+        "y": 40,
         "wires": []
     },
     {
         "id": "0361884ba2bf6086",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "digital_pro_x",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 600,
-        "y": 520,
-        "wires": []
-    },
-    {
-        "id": "89af02b1bc8fde6a",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "analog_inputs_x",
+        "name": "digital_pro_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -826,14 +735,31 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 610,
-        "y": 560,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "89af02b1bc8fde6a",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "analog_inputs_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 120,
         "wires": []
     },
     {
         "id": "e6b1b4baeb9ea6aa",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "analog_pro_x",
+        "name": "analog_pro_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -842,15 +768,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 600,
-        "y": 600,
+        "x": 610,
+        "y": 160,
         "wires": []
     },
     {
         "id": "f1a672c83645300a",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "mqtt_in_x",
+        "name": "mqtt_in_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -859,15 +785,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 830,
-        "y": 140,
+        "x": 900,
+        "y": 180,
         "wires": []
     },
     {
         "id": "beb4346081038e85",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "flow_context_x",
+        "name": "flow_context_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -876,15 +802,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 370,
-        "y": 140,
+        "x": 380,
+        "y": 180,
         "wires": []
     },
     {
         "id": "4374c2d006a762aa",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "mqtt_manager_1",
+        "name": "mqtt_manager_1_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -893,15 +819,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1070,
-        "y": 40,
+        "x": 1150,
+        "y": 80,
         "wires": []
     },
     {
         "id": "6dcda7c82fb9d78e",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "mqtt_manager_2",
+        "name": "mqtt_manager_2_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -910,15 +836,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1070,
-        "y": 80,
+        "x": 1150,
+        "y": 120,
         "wires": []
     },
     {
         "id": "67f93eb4cc3f69b4",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "mqtt_manager_3",
+        "name": "mqtt_manager_3_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -927,15 +853,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1070,
-        "y": 120,
+        "x": 1150,
+        "y": 160,
         "wires": []
     },
     {
         "id": "c191c7397b21bd4f",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "fsm_1",
+        "name": "fsm_1_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -944,15 +870,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 880,
-        "y": 400,
+        "x": 900,
+        "y": 440,
         "wires": []
     },
     {
         "id": "664d95256e2c36ad",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "timer_manager_1",
+        "name": "timer_manager_1_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -961,15 +887,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1040,
-        "y": 580,
+        "x": 1150,
+        "y": 460,
         "wires": []
     },
     {
         "id": "eabb49f6ea664cdf",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "timer_manager_2",
+        "name": "timer_manager_2_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -978,15 +904,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1040,
-        "y": 620,
+        "x": 1150,
+        "y": 500,
         "wires": []
     },
     {
         "id": "9185b5217ebdc209",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "timer_manager_3",
+        "name": "timer_manager_3_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -995,15 +921,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1040,
-        "y": 660,
+        "x": 1150,
+        "y": 540,
         "wires": []
     },
     {
         "id": "abbeb7f879dce340",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "fsm_2",
+        "name": "fsm_2_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -1012,65 +938,15 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 880,
-        "y": 440,
+        "x": 900,
+        "y": 480,
         "wires": []
     },
     {
-        "id": "c6751ebfbed920fc",
-        "type": "function",
-        "z": "2d8538969c77a5df",
-        "name": "relays",
-        "func": "const flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst relayChannels1 = config.io.relay_outputs_1.channels || {};\nconst relayChannels2 = config.io.relay_outputs_2.channels || {};\nconst unitid1 = config.io.relay_outputs_1.unitid;\nconst unitid2 = config.io.relay_outputs_2.unitid;\n\nlet currentArray1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet currentArray2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\nfunction getRelayInfo(name) {\n  if (relayChannels1?.[name]) return { array: currentArray1, bit: relayChannels1[name].map, unitid: unitid1, arrayName: \"last_write_array_1\" };\n  if (relayChannels2?.[name]) return { array: currentArray2, bit: relayChannels2[name].map, unitid: unitid2, arrayName: \"last_write_array_2\" };\n  return null;\n}\n\nfunction createRelayMsg(array, unitid, arrayName) {\n  let word = 0;\n  for (let i = 0; i < 8; i++) {\n    if (array[i]) word |= (1 << i);\n  }\n  context.set(arrayName, array);\n  return { payload: { value: word, fc: 6, unitid, address: 128, quantity: 1 } };\n}\n\n// queue sadece port 1 için\nfunction enqueuePort1(msgObj) {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  sendQueue.push(msgObj);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n  const msgObj = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n  node.send([msgObj, null]); // port 1\n  setTimeout(processQueue, 50);\n}\n\n// evt mesajları port 2’den direkt gönderim\nfunction sendEvt(msgObj) {\n  node.send([null, msgObj]); // port 2\n}\n\n// === Genel relays off fonksiyonu ===\nfunction resetRelays({ preservePowerContactor = false, setPowerContactor = null } = {}) {\n  // relay 1 ve relay 2 arraylerini sıfırla\n  currentArray1 = Array(8).fill(false);\n  currentArray2 = Array(8).fill(false);\n\n  // power_contactor korunacak veya değiştirilecek\n  if (preservePowerContactor) {\n    const emBit = relayChannels2.power_contactor?.map;\n    if (emBit !== undefined) currentArray2[emBit] = runtime.power_contactor?.val === \"on\";\n  } else if (setPowerContactor !== null) {\n    const emBit = relayChannels2.power_contactor?.map;\n    if (emBit !== undefined) currentArray2[emBit] = setPowerContactor;\n    runtime.power_contactor = { val: setPowerContactor ? \"on\" : \"off\" };\n  }\n\n  // power_contactor evt mesajı her zaman gönderilsin\n  if (relayChannels2.power_contactor) {\n    sendEvt({ payload: { method: \"evt\", params: { type: \"power_contactor\", val: runtime.power_contactor.val } } });\n  }\n\n  // loader ve diğer röleler off\n  for (const name of Object.keys({ ...relayChannels1, ...relayChannels2 })) {\n    if (name === \"power_contactor\") continue;\n    if (runtime[name]) runtime[name].val = \"off\";\n    sendEvt({ payload: { method: \"evt\", params: { type: name, val: \"off\" } } });\n  }\n\n  // loader özel off\n  const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n    .filter(([_, val]) => val.group === \"loader\")\n    .map(([key]) => key);\n  loaderKeys.forEach(key => {\n    const r = getRelayInfo(key);\n    if (r) r.array[r.bit] = false;\n  });\n  runtime.loader = { val: \"off\" };\n  sendEvt({ payload: { method: \"evt\", params: { type: \"loader\", val: \"off\" } } });\n\n  // modbus mesajları port1 üzerinden\n  enqueuePort1(createRelayMsg(currentArray1, unitid1, \"last_write_array_1\"));\n  enqueuePort1(createRelayMsg(currentArray2, unitid2, \"last_write_array_2\"));\n}\n\n// === Mesaj işleme ===\nif (type === \"off\" && target === \"actuators\") {\n  resetRelays({ preservePowerContactor: true });\n\n} else if (type === \"off\" && target === \"power\") {\n  resetRelays({ setPowerContactor: false });\n\n} else if (type === \"on\" && target === \"power\") {\n  resetRelays({ setPowerContactor: true });\n\n} else {\n  // loader ve diğer röleler\n  const relay = getRelayInfo(target);\n  if (relay) {\n    const val = type === \"on\";\n    relay.array[relay.bit] = val;\n    runtime[target] = { val: type };\n    sendEvt({ payload: { method: \"evt\", params: { type: target, val: type } } });\n    enqueuePort1(createRelayMsg(relay.array, relay.unitid, relay.arrayName));\n  }\n\n  // loader özel forward/reverse\n  if (target === \"loader\") {\n    const loaderKeys = Object.entries({ ...relayChannels1, ...relayChannels2 })\n      .filter(([_, val]) => val.group === \"loader\")\n      .map(([key]) => key);\n    const relays = Object.fromEntries(loaderKeys.map(key => [key, getRelayInfo(key)]).filter(([_, info]) => info));\n    const motor = relays[\"loader_motor\"];\n    const fwd = relays[\"loader_forward_valve\"];\n    const rev = relays[\"loader_reverse_valve\"];\n    if (motor && fwd && rev) {\n      if (type === \"forward_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = true; rev.array[rev.bit] = false; }\n      else if (type === \"reverse_on\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = false; rev.array[rev.bit] = true; }\n      else if (type === \"off\") { motor.array[motor.bit] = false; fwd.array[fwd.bit] = false; rev.array[rev.bit] = false; }\n\n      runtime.loader = { val: type };\n      runtime.loader_motor = { val: type === \"off\" ? \"off\" : \"on\" };\n      runtime.loader_forward_valve = { val: type === \"off\" ? \"off\" : (type === \"forward_on\" ? \"on\" : \"off\") };\n      runtime.loader_reverse_valve = { val: type === \"off\" ? \"off\" : (type === \"reverse_on\" ? \"on\" : \"off\") };\n\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader\", val: type } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_motor\", val: runtime.loader_motor.val } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_forward_valve\", val: runtime.loader_forward_valve.val } } });\n      sendEvt({ payload: { method: \"evt\", params: { type: \"loader_reverse_valve\", val: runtime.loader_reverse_valve.val } } });\n\n      enqueuePort1(createRelayMsg(motor.array, motor.unitid, motor.arrayName));\n      enqueuePort1(createRelayMsg(fwd.array, fwd.unitid, fwd.arrayName));\n      enqueuePort1(createRelayMsg(rev.array, rev.unitid, rev.arrayName));\n    }\n  }\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
-        "outputs": 2,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1270,
-        "y": 500,
-        "wires": [
-            [
-                "0719549b97c80402",
-                "1c798b44f6d4353a"
-            ],
-            [
-                "0b3654ab51cfd27c",
-                "7ccdddabf54a9ffe"
-            ]
-        ]
-    },
-    {
-        "id": "d8c51a71cc91d064",
-        "type": "function",
-        "z": "2d8538969c77a5df",
-        "name": "sinamics",
-        "func": "// === SINAMICS.JS ===\n// Bu nod motor sürücülerini (sinamics) yönetir.\n// Port 1: Modbus Flex Writer’a gönderim (sinamics komutları)\n// Port 2: EVT mesajları (durum/speed)\n\n// === Flow context ===\nconst flowData = flow.get(\"flow\");\nconst config = flowData.config;\nconst runtime = flowData.runtime;\n\nconst payload = msg.payload;\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst sinamicsChannels = config.sinamics?.channels || {};\nconst commandWords = config.sinamics?.command_words || {};\nconst speedMax = config.sinamics?.speed_max || 16384;\n\n// === Gönderim listeleri ===\nconst modbusMsgs = []; // Port 1\nconst evtMsgs = [];    // Port 2\n\n// === Kuyruk sistemi ===\nfunction enqueueMsgs() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  const queuedMsgs = [];\n  modbusMsgs.forEach(m => queuedMsgs.push([0, m])); // Port 1\n  evtMsgs.forEach(m => queuedMsgs.push([1, m]));   // Port 2\n  sendQueue.push(...queuedMsgs);\n  context.set(\"sendQueue\", sendQueue);\n  if (!context.get(\"isSending\")) processQueue();\n}\n\nfunction processQueue() {\n  let sendQueue = context.get(\"sendQueue\") || [];\n  if (sendQueue.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n\n  const [portIndex, msgObj] = sendQueue.shift();\n  context.set(\"sendQueue\", sendQueue);\n\n  node.send([\n    portIndex === 0 ? msgObj : null,\n    portIndex === 1 ? msgObj : null\n  ]);\n\n  // Port 1 modbus için 50 ms bekleme, Port 2 evt anında\n  setTimeout(processQueue, portIndex === 0 ? 50 : 0);\n}\n\n// === Modbus mesajı oluştur ===\nfunction createModbusMsg(value, unitid, address, quantity = 1) {\n  return { payload: { value, fc: 6, unitid, address, quantity } };\n}\n\n// === Tüm sinamicsleri OFF ===\nfunction doSinamicsOff() {\n  for (const [name, sin] of Object.entries(sinamicsChannels)) {\n    // motoru durdur\n    const offVal = commandWords.off;\n    if (offVal != null) {\n      modbusMsgs.push(createModbusMsg(offVal, sin.unitid, 99, 1));\n    }\n\n    // hız registerına runtime’daki speed’i gönder\n    let speedValue = 0;\n    if (runtime[name]?.speed?.set_point != null) {\n      speedValue = Math.round(runtime[name].speed.set_point / 100 * speedMax);\n    }\n    modbusMsgs.push(createModbusMsg(speedValue, sin.unitid, 100, 1));\n\n    // runtime güncelle – speed aynen kalıyor\n    if (!runtime[name]) runtime[name] = {};\n    runtime[name].val = \"off\";\n\n    evtMsgs.push({\n      payload: {\n        method: \"evt\",\n        params: {\n          type: name,\n          val: runtime[name].val,\n          speed: runtime[name].speed\n            ? { set_point: runtime[name].speed.set_point }\n            : undefined\n        }\n      }\n    });\n  }\n  enqueueMsgs();\n}\n\n// === Komut işleme ===\nif (type === \"off\" && target === \"actuators\") {\n  // Tüm sinamicsleri kapat\n  doSinamicsOff();\n\n} else if (type === \"off\" && target === \"power\") {\n  // Tüm sinamicsleri kapat\n  doSinamicsOff();\n\n} else if (type === \"on\" && target === \"power\") {\n  // 10 sn bekleyip tüm sinamics’leri kapat\n  setTimeout(doSinamicsOff, 10000);\n\n} else if (sinamicsChannels[target]) {\n  // Tekil motorlar için yön/sürat komutları\n  const unitid = sinamicsChannels[target].unitid;\n\n  if ([\"forward_on\", \"reverse_on\", \"off\"].includes(type)) {\n    const value = commandWords[type];\n    if (value != null) {\n      modbusMsgs.push(createModbusMsg(value, unitid, 99, 1));\n      if (!runtime[target]) runtime[target] = {};\n      runtime[target].val = type;\n    }\n\n    // her off/forward_on/reverse_on’da runtime speed’i de 100’e gönder\n    let speedValue = 0;\n    if (runtime[target]?.speed?.set_point != null) {\n      speedValue = Math.round(runtime[target].speed.set_point / 100 * speedMax);\n    }\n    modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));\n  }\n\n  if (type === \"speed\" && typeof set_point === \"number\") {\n    const value = Math.round(set_point / 100 * speedMax);\n    modbusMsgs.push(createModbusMsg(value, unitid, 100, 1));\n    if (!runtime[target]) runtime[target] = {};\n    if (!runtime[target].speed) runtime[target].speed = {};\n    runtime[target].speed.set_point = set_point;\n  }\n\n  // evt her zaman\n  evtMsgs.push({\n    payload: {\n      method: \"evt\",\n      params: {\n        type: target,\n        val: runtime[target]?.val,\n        speed: runtime[target]?.speed\n          ? { set_point: runtime[target].speed.set_point }\n          : undefined\n      }\n    }\n  });\n  enqueueMsgs();\n\n} else {\n  // Bu nod sadece sinamicsleri işler\n  return null;\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
-        "outputs": 2,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1280,
-        "y": 540,
-        "wires": [
-            [
-                "155eb5f34a3f5ca3",
-                "86a9ac90f6c99b53"
-            ],
-            [
-                "0b3654ab51cfd27c",
-                "32d9ab15358d3e71"
-            ]
-        ]
-    },
-    {
-        "id": "32d9ab15358d3e71",
+        "id": "b442c38084e0c61c",
         "type": "debug",
         "z": "2d8538969c77a5df",
-        "name": "sinamics_2",
+        "name": "energy_meter_dbg",
         "active": true,
         "tosidebar": true,
         "console": true,
@@ -1079,8 +955,350 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1300,
-        "y": 700,
+        "x": 620,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "67baacaa5c302e79",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "energy_meter_pro_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 630,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "0dfb91744e6dc6e8",
+        "type": "inject",
+        "z": "2d8538969c77a5df",
+        "name": "sin_tick",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 580,
+        "wires": [
+            [
+                "7d089b8f40676014"
+            ]
+        ]
+    },
+    {
+        "id": "7d089b8f40676014",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "sin_read",
+        "func": "// === SIN_READ..JS ===\n// Bu fonksiyon nodu, her tetiklendiğinde tüm sinamics sürücülerinin ZSW Status Word registerlerini okumak için mesaj üretir.\n// Çıkışı sin_queue'ya bağlıdır.\n\nconst flowData = flow.get(\"flow\");\nif (!flowData || !flowData.config || !flowData.config.sinamics) return null;\n\n// Sürücü listesi flow context'ten alınıyor\nconst sinamicsChannels = flowData.config.sinamics.channels;\nconst address = 109;   // ZSW Status Word register adresi\nconst quantity = 1;    // Okunacak register sayısı\n\n// Mesajları oluştur\nconst msgs = Object.entries(sinamicsChannels).map(([name, cfg]) => {\n    const unitid = cfg.unitid;\n    return {\n        payload: {\n            fc: 3,\n            unitid: unitid,\n            address: address,\n            quantity: quantity,\n            meta: { unitid: unitid }\n        }\n    };\n});\n\n// Tek çıkıştan dört mesaj olarak göndermek için:\nreturn [ msgs ];\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 600,
+        "wires": [
+            [
+                "23a2e5b697446475",
+                "cf2d06305a048c72"
+            ]
+        ]
+    },
+    {
+        "id": "8b077bd685e2a66c",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "sin_write",
+        "func": "// === SIN_WRITE.JS ===\n// Bu node gelen \"cmd\" mesajlarına göre sinamics sürücülerine modbus write mesajları oluşturur\n// Çıkışı sin_queue'ya bağlı olacak, evt mesajları üretmeyecek\n\nconst flowData = flow.get(\"flow\");\nif (!flowData || !flowData.config || !flowData.config.sinamics) return null;\n\nconst config = flowData.config;\nconst runtime = flowData.runtime;\nconst payload = msg.payload;\n\nif (!payload || payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\n\nconst { type, target, set_point } = payload.params;\nif (!type || !target) return null;\n\nconst sinamicsChannels = config.sinamics.channels;\nconst commandWords = config.sinamics.command_words;\nconst speedMax = config.sinamics.speed_max || 16384;\nconst powerUpTime = config.sinamics.power_up_time || 10000;\n\n// Modbus write mesajı oluştur\nfunction createModbusMsg(value, unitid, address, quantity = 1) {\n    return { payload: { value, fc: 6, unitid, address, quantity } };\n}\n\n// Tüm sinamicsleri OFF komutu\nfunction doSinamicsOff() {\n    const msgs = [];\n    for (const [name, sin] of Object.entries(sinamicsChannels)) {\n        const unitid = sin.unitid;\n\n        // Komut word\n        const offVal = commandWords.off;\n        if (offVal != null) msgs.push(createModbusMsg(offVal, unitid, 99, 1));\n\n        // Speed register\n        const speedValue = runtime[name]?.speed?.set_point\n            ? Math.round(runtime[name].speed.set_point / 100 * speedMax)\n            : 0;\n        msgs.push(createModbusMsg(speedValue, unitid, 100, 1));\n\n        // Runtime güncelle\n        if (!runtime[name]) runtime[name] = {};\n        runtime[name].val = \"off\";\n    }\n    return msgs;\n}\n\n// Mesajları tek çıkışa gönder\nfunction sendMsgs(msgs) {\n    for (const m of msgs) node.send(m);\n}\n\nlet modbusMsgs = [];\n\n/* 🔹 Fault Acknowledgement tüm sinamics için */\nif (type === \"fault_ack\" && target === \"sinamics\") {\n    const faultAckSet = commandWords.fault_ack_set;\n    const faultAckRes = commandWords.fault_ack_res;\n\n    if (faultAckSet == null || faultAckRes == null) {\n        node.warn(\"fault_ack_set veya fault_ack_res tanımlı değil.\");\n        return null;\n    }\n\n    for (const [name, sin] of Object.entries(sinamicsChannels)) {\n        modbusMsgs.push(createModbusMsg(faultAckSet, sin.unitid, 99, 1));\n    }\n    for (const [name, sin] of Object.entries(sinamicsChannels)) {\n        modbusMsgs.push(createModbusMsg(faultAckRes, sin.unitid, 99, 1));\n    }\n\n    // 🔹 Mesajları gönder\n    sendMsgs(modbusMsgs);\n\n} else if ((type === \"off\" && (target === \"actuators\" || target === \"power\"))) {\n    // 🔹 Hemen gönder\n    modbusMsgs = doSinamicsOff();\n    sendMsgs(modbusMsgs);\n\n} else if (type === \"on\" && target === \"power\") {\n    // 🔹 Gecikmeli gönderim\n    setTimeout(() => {\n        const delayedMsgs = doSinamicsOff();\n        sendMsgs(delayedMsgs);\n        flow.set(\"flow\", flowData);\n    }, powerUpTime);\n\n} else if (sinamicsChannels[target]) {\n    const unitid = sinamicsChannels[target].unitid;\n\n    if ([\"forward\", \"reverse\", \"off\"].includes(type)) {\n        const value = commandWords[type];\n        if (value != null) {\n            modbusMsgs.push(createModbusMsg(value, unitid, 99, 1));\n            if (!runtime[target]) runtime[target] = {};\n            runtime[target].val = type;\n        }\n        // Speed register\n        const speedValue = runtime[target]?.speed?.set_point\n            ? Math.round(runtime[target].speed.set_point / 100 * speedMax)\n            : 0;\n        modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));\n    }\n\n    if (type === \"speed\" && typeof set_point === \"number\") {\n        const speedValue = Math.round(set_point / 100 * speedMax);\n        modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));\n        if (!runtime[target]) runtime[target] = {};\n        if (!runtime[target].speed) runtime[target].speed = {};\n        runtime[target].speed.set_point = set_point;\n    }\n\n    sendMsgs(modbusMsgs);\n} else {\n    return null; // Sadece sinamics target'larını işler\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 640,
+        "wires": [
+            [
+                "23a2e5b697446475",
+                "2ceff45c10c1555f"
+            ]
+        ]
+    },
+    {
+        "id": "23a2e5b697446475",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "sin_queue",
+        "func": "/****************************************************\n * sin_queue – dispatcher (write öncelikli)\n * Port 1 → sin_getter  (fc:3 read)\n * Port 2 → sin_writer  (fc:6 write)\n ****************************************************/\n\n// --- Config’ten queue_interval çek ---\nlet flowData = flow.get(\"flow\") || {};\nlet queueInterval = 50; // default\nif (flowData.config?.sinamics?.queue_interval) {\n    queueInterval = flowData.config.sinamics.queue_interval;\n}\n\n// --- Kuyrukları node context’te tut ---\nlet queueWrite  = context.get(\"queueWrite\")  || [];\nlet queueRead   = context.get(\"queueRead\")   || [];\nlet timerActive = context.get(\"timerActive\") || false;\n\n// --- fc alanını payload’dan çek ---\nconst fc = msg?.payload?.fc;\n\n// --- Mesajı ilgili kuyruğa at ---\nif (fc === 6) {\n    // Write mesajı\n    queueWrite.push(msg);\n} else if (fc === 3) {\n    // Read mesajı\n    queueRead.push(msg);\n} else {\n    // fc tanımlı değilse görmezden gel\n    return null;\n}\n\n// --- Kuyrukları context’e yaz ---\ncontext.set(\"queueWrite\", queueWrite);\ncontext.set(\"queueRead\", queueRead);\n\n// --- Timer başlatılmamışsa başlat ---\nif (!timerActive) {\n    context.set(\"timerActive\", true);\n    sendNext();\n}\n\nreturn null; // şimdilik mesaj döndürmüyoruz, node.send() kullanıyoruz\n\n/****************************************************\n * Fonksiyonlar\n ****************************************************/\nfunction sendNext() {\n    // Kuyrukları oku\n    let qW = context.get(\"queueWrite\") || [];\n    let qR = context.get(\"queueRead\")  || [];\n\n    let nextMsg = null;\n    let port = null;\n\n    // Öncelik: önce write kuyruğu\n    if (qW.length > 0) {\n        nextMsg = qW.shift();\n        port = 2; // sin_writer çıkışı\n    } else if (qR.length > 0) {\n        nextMsg = qR.shift();\n        port = 1; // sin_getter çıkışı\n    }\n\n    // Kuyrukları geri kaydet\n    context.set(\"queueWrite\", qW);\n    context.set(\"queueRead\", qR);\n\n    if (nextMsg) {\n        // İki çıkışlı fonksiyon nodu: [out1, out2]\n        node.send([\n            port === 1 ? nextMsg : null,\n            port === 2 ? nextMsg : null\n        ]);\n\n        // queue_interval sonra tekrar çalıştır\n        setTimeout(sendNext, queueInterval);\n    } else {\n        // Kuyruklar boş, timer’ı durdur\n        context.set(\"timerActive\", false);\n    }\n}\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 600,
+        "wires": [
+            [
+                "7893af14ca0f63cc",
+                "4e0ab2e9367c4eb9"
+            ],
+            [
+                "155eb5f34a3f5ca3",
+                "e14dbe6bed8406e9"
+            ]
+        ]
+    },
+    {
+        "id": "b08e6ec489add032",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "sin_evt",
+        "func": "/****************************************************\n * sin_evt – sin_getter’dan gelen ZSW (status word)\n * değişim olduğunda evt mesajı üretir.\n * Tüm bit tanımları config.status_word’dan dinamik alınır.\n * Çıkış msg.payload üzerinden verilecek.\n ****************************************************/\n\nconst flowData = flow.get(\"flow\") || {};\nconst sinConfig = flowData.config?.sinamics || {};\nconst labels = flowData.config?.labels || {true: \"on\", false: \"off\"};\nconst statusWordMap = sinConfig.status_word || {};\n\n// payload array [val] veya tek val olabilir\nconst rawVal = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\n\n// UnitID'yi olabilecek tüm kaynaklardan sırayla dene\nconst unitid =\n    msg.meta?.unitid ??\n    msg.unitid ??\n    msg.payload?.unitid ??\n    msg.modbusResponseBuffer?.unitid;\n\nif (unitid === undefined) {\n    node.warn(\"unitid bilgisi bulunamadı (meta/unitid/payload/modbusResponseBuffer).\");\n    return null;\n}\n\nlet targetName = null;\nfor (const [name, ch] of Object.entries(sinConfig.channels || {})) {\n    if (ch.unitid === unitid) {\n        targetName = name;\n        break;\n    }\n}\n\nif (!targetName) {\n    node.warn(\"sin_evt: unitid eşleşmedi \" + unitid);\n    return null;\n}\n\n// bit okuma fonksiyonu\nfunction getBit(val, bitIndex) {\n    return (val & (1 << bitIndex)) !== 0;\n}\n\n// config.status_word’daki tüm key’leri dinamik çöz\nlet stateObj = {};\nfor (const [key, def] of Object.entries(statusWordMap)) {\n    const bitIndex = def.map;\n    const bitVal = getBit(rawVal, bitIndex);\n    stateObj[key] = labels[bitVal]; // örn on/off\n}\n\n// Son durumla karşılaştır, değişim varsa gönder\nlet lastStates = context.get(\"lastStates\") || {};\nlet last = lastStates[targetName];\n\nlet changed = false;\nif (!last) {\n    changed = true; // ilk sefer\n} else {\n    for (let k of Object.keys(stateObj)) {\n        if (stateObj[k] !== last[k]) {\n            changed = true;\n            break;\n        }\n    }\n}\n\nif (changed) {\n    // Kaydet\n    lastStates[targetName] = stateObj;\n    context.set(\"lastStates\", lastStates);\n\n    // evt mesajını payload içine sar\n    const evtMsg = {\n        payload: {\n            method: \"evt\",\n            params: {\n                type: targetName,\n                val: stateObj\n            }\n        }\n    };\n\n    return evtMsg;\n} else {\n    return null; // değişim yok\n}\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1100,
+        "y": 600,
+        "wires": [
+            [
+                "881e7e91d9a38d12",
+                "0b3654ab51cfd27c"
+            ]
+        ]
+    },
+    {
+        "id": "7893af14ca0f63cc",
+        "type": "modbus-flex-getter",
+        "z": "2d8538969c77a5df",
+        "name": "sin_getter",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "server": "9703a3f2808e2fa6",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": true,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 880,
+        "y": 600,
+        "wires": [
+            [
+                "b08e6ec489add032"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "d7108d799a8d52c2",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "relays_write",
+        "func": "// === RELAYS_WRITE.JS — FIXED POWER_BIT ORDER ===\n\n// ===== const / başlangıç =====\nconst flowData = flow.get(\"flow\");\nif (!flowData || !flowData.config) return null;\n\nconst config = flowData.config;\nconst runtime = flowData.runtime || {};\nconst labels = config.labels || { true: \"on\", false: \"off\" };\n\nconst payload = msg.payload || {};\nif (payload.method !== \"cmd\" || typeof payload.params !== \"object\") return null;\nconst { type, target } = payload.params || {};\nif (!type || !target) return null;\n\n// local arrays (work on these only)\nlet arr1 = context.get(\"last_write_array_1\") || Array(8).fill(false);\nlet arr2 = context.get(\"last_write_array_2\") || Array(8).fill(false);\n\n// channels / unitid\nconst relayChannels = { ...(config.io.relay_outputs_1?.channels || {}), ...(config.io.relay_outputs_2?.channels || {}) };\nconst unitids = { 1: config.io.relay_outputs_1?.unitid, 2: config.io.relay_outputs_2?.unitid };\nconst arrays = { 1: arr1, 2: arr2 };\nconst POWER_BIT = config.io.relay_outputs_2?.channels?.power_contactor?.map;\n\n// ===== functions =====\nfunction getRelayInfo(name) {\n  if (config.io.relay_outputs_1?.channels?.[name]) {\n    return { array: arr1, bit: config.io.relay_outputs_1.channels[name].map, unitid: unitids[1], arrayName: \"last_write_array_1\" };\n  }\n  if (config.io.relay_outputs_2?.channels?.[name]) {\n    return { array: arr2, bit: config.io.relay_outputs_2.channels[name].map, unitid: unitids[2], arrayName: \"last_write_array_2\" };\n  }\n  return null;\n}\n\nfunction createRelayMsgFromArray(theArray, unitid, arrayName) {\n  const word = theArray.reduce((w, b, i) => (b ? w | (1 << i) : w), 0);\n  context.set(arrayName, theArray);\n  return { payload: { value: word, fc: 6, unitid, address: 128, quantity: 1 } };\n}\n\nfunction sendEvtIfChanged(name, valStr) {\n  if ((runtime[name]?.val) !== valStr) {\n    runtime[name] = { val: valStr };\n    node.send([null, { payload: { method: \"evt\", params: { type: name, val: valStr } } }]);\n  }\n}\n\nfunction computePowerNewValue(preservePower, setPower) {\n  if (preservePower) {\n    const rtVal = runtime.power_contactor?.val;\n    if (rtVal === \"on\") return true;\n    if (rtVal === \"off\") return false;\n    if (POWER_BIT !== undefined) return !!arr2[POWER_BIT];\n    return false;\n  }\n  if (typeof setPower === \"boolean\") return setPower;\n  return false;\n}\n\n// ===== FIXED resetRelays =====\nfunction resetRelays({ preservePower = false, setPower = null } = {}) {\n  // 1. tümünü sıfırla\n  arr1.fill(false);\n  arr2.fill(false);\n\n  // 2. loader ve diğer röleleri kapat\n  Object.keys(relayChannels).forEach(name => {\n    if (name === \"power_contactor\") return; // power bitini atla\n    const ch = relayChannels[name];\n    const targetArray = (ch.unitid === unitids[1]) ? arr1 : arr2;\n    targetArray[ch.map] = false;\n    sendEvtIfChanged(name, \"off\");\n  });\n\n  // loader group off\n  if (config.io.relay_groups?.loader) {\n    Object.keys(config.io.relay_groups.loader).forEach(k => {\n      const r = getRelayInfo(k);\n      if (r) r.array[r.bit] = false;\n    });\n    sendEvtIfChanged(\"loader\", \"off\");\n  }\n\n  // 3. EN SON power bit\n  const newPowerBool = computePowerNewValue(preservePower, setPower);\n  if (POWER_BIT !== undefined) {\n    arr2[POWER_BIT] = !!newPowerBool;\n    sendEvtIfChanged(\"power_contactor\", labels[!!newPowerBool]);\n  }\n\n  // 4. persist arrays\n  context.set(\"last_write_array_1\", arr1);\n  context.set(\"last_write_array_2\", arr2);\n\n  // 5. FC6 mesajlarını üret\n  const msgs = [];\n  if (unitids[1] != null) msgs.push(createRelayMsgFromArray(arr1, unitids[1], \"last_write_array_1\"));\n  if (unitids[2] != null) msgs.push(createRelayMsgFromArray(arr2, unitids[2], \"last_write_array_2\"));\n  node.send([msgs, null]);\n}\n\n// ===== other functions unchanged =====\nfunction writeSingleRelay(name, setOn) {\n  const info = getRelayInfo(name);\n  if (!info) return;\n  info.array[info.bit] = !!setOn;\n  context.set(info.arrayName, info.array);\n  sendEvtIfChanged(name, (info.array[info.bit] ? labels[true] : labels[false]));\n  node.send([[ createRelayMsgFromArray(info.array, info.unitid, info.arrayName) ], null]);\n}\n\nfunction handleLoaderCmd(cmdType) {\n  if (!config.io.relay_groups?.loader) return;\n  const keys = Object.keys(config.io.relay_groups.loader || {});\n  const motorKey = keys[0], fwdKey = keys[1], revKey = keys[2];\n  const motor = getRelayInfo(motorKey), fwd = getRelayInfo(fwdKey), rev = getRelayInfo(revKey);\n  if (!(motor && fwd && rev)) return;\n\n  [motor, fwd, rev].forEach(r => r.array[r.bit] = false);\n\n  if (cmdType === \"forward\") { motor.array[motor.bit] = true; fwd.array[fwd.bit] = true; }\n  else if (cmdType === \"reverse\") { motor.array[motor.bit] = true; rev.array[rev.bit] = true; }\n\n  context.set(motor.arrayName, motor.array);\n  context.set(fwd.arrayName, fwd.array);\n  context.set(rev.arrayName, rev.array);\n\n  sendEvtIfChanged(\"loader\", cmdType);\n  sendEvtIfChanged(motorKey, motor.array[motor.bit] ? labels[true] : labels[false]);\n  sendEvtIfChanged(fwdKey, fwd.array[fwd.bit] ? labels[true] : labels[false]);\n  sendEvtIfChanged(revKey, rev.array[rev.bit] ? labels[true] : labels[false]);\n\n  const msgs = [];\n  [motor, fwd, rev].forEach(r => msgs.push(createRelayMsgFromArray(r.array, r.unitid, r.arrayName)));\n  const uniqueMsgs = Array.from(new Map(msgs.map(m => [m.payload.unitid, m])).values());\n  node.send([uniqueMsgs, null]);\n}\n\n// ===== main flow =====\nif ((type === \"off\" && target === \"actuators\") || (type === \"off\" && target === \"power\") || (type === \"on\" && target === \"power\")) {\n  const args = (target === \"actuators\") ? { preservePower: true } : { setPower: (type === \"on\") };\n  resetRelays(args);\n} else if (target === \"loader\") {\n  handleLoaderCmd(type);\n} else {\n  writeSingleRelay(target, type === \"on\");\n}\n\nflow.set(\"flow\", flowData);\nreturn null;\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 720,
+        "wires": [
+            [
+                "634cca30ddec5b5e",
+                "283b7cc314140cbe"
+            ],
+            [
+                "ff9839d7797531cf",
+                "0b3654ab51cfd27c"
+            ]
+        ]
+    },
+    {
+        "id": "634cca30ddec5b5e",
+        "type": "function",
+        "z": "2d8538969c77a5df",
+        "name": "relays_queue",
+        "func": "// === RELAYS_QUEUE.JS ===\n// relays_write port1’den gelen fc:6 write mesajlarını sıraya alır ve\n// relays_writer node’una gönderir.\n\nconst queueInterval = flow.get(\"flow\")?.config?.io?.queue_interval || 50;\n\nlet sendQueue = context.get(\"sendQueue\") || [];\nsendQueue = sendQueue.concat(Array.isArray(msg) ? msg : [msg]); // gelen mesaj dizisi olabilir\ncontext.set(\"sendQueue\", sendQueue);\n\nif (!context.get(\"isSending\")) processQueue();\n\nfunction processQueue() {\n  let q = context.get(\"sendQueue\") || [];\n  if (q.length === 0) {\n    context.set(\"isSending\", false);\n    return;\n  }\n  context.set(\"isSending\", true);\n  const m = q.shift();\n  context.set(\"sendQueue\", q);\n  node.send(m); // relays_writer’a tek tek gönder\n  setTimeout(processQueue, queueInterval);\n}\n\nreturn null;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 720,
+        "wires": [
+            [
+                "0719549b97c80402",
+                "7c91402c2c82f119"
+            ]
+        ]
+    },
+    {
+        "id": "cf2d06305a048c72",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "d": true,
+        "name": "sin_read_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "2ceff45c10c1555f",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "d": true,
+        "name": "sin_write_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "283b7cc314140cbe",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "d": true,
+        "name": "relays_write_1_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "4e0ab2e9367c4eb9",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "d": true,
+        "name": "sin_queue_1_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "e14dbe6bed8406e9",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "sin_queue_2_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "7c91402c2c82f119",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "relays_queue_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "881e7e91d9a38d12",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "sin_evt_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1120,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "ff9839d7797531cf",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "relays_write_2_dbg",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 880,
         "wires": []
     }
 ]

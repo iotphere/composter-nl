@@ -6,6 +6,7 @@
                 "false": "off"
             },
             "io": {
+                "queue_interval": 50,
                 "digital_inputs": {
                     "config_node": "201_115200_tcp_rtu_dig_inp",
                     "unitid": 11,
@@ -120,6 +121,13 @@
                             "map": 7
                         }
                     }
+                },
+                "relay_groups": {
+                    "loader": {
+                        "loader_motor": null,
+                        "loader_forward_valve": null,
+                        "loader_reverse_valve": null
+                    }
                 }
             },
             "energy_meter": {
@@ -141,12 +149,6 @@
             },
             "sinamics": {
                 "config_node": "202_9600_tcp_rtu_sinamics",
-                "command_words": {
-                    "forward_on": 1279,
-                    "reverse_on": 3327,
-                    "off": 1278
-                },
-                "speed_max": 16384,
                 "channels": {
                     "roof": {
                         "unitid": 11
@@ -160,7 +162,31 @@
                     "discharger": {
                         "unitid": 14
                     }
-                }
+                },
+                "command_words": {
+                    "forward": 1151,
+                    "reverse": 3199,
+                    "off": 1150,
+                    "fault_ack_res": 1150,
+                    "fault_ack_set": 1278
+                },
+                "status_word": {
+                    "work": {
+                        "map": 2
+                    },
+                    "fault": {
+                        "map": 3
+                    },
+                    "warning": {
+                        "map": 7
+                    },
+                    "direction": {
+                        "map": 14
+                    }
+                },
+                "speed_max": 16384,
+                "queue_interval": 50,
+                "power_up_time": 10000
             },
             "timers": {
                 "fan_pwm": {
@@ -172,7 +198,7 @@
                         "1": {
                             "method": "cmd",
                             "params": {
-                                "type": "forward_on",
+                                "type": "forward",
                                 "target": "fan"
                             },
                             "port": 2
@@ -196,7 +222,7 @@
                         "1": {
                             "method": "cmd",
                             "params": {
-                                "type": "forward_on",
+                                "type": "forward",
                                 "target": "water_pump"
                             },
                             "port": 2
@@ -337,21 +363,6 @@
                             "port": 3
                         }
                     }
-                },
-                "telemetry_periodical": {
-                    "form": "loop",
-                    "interval": 2,
-                    "unit": "min",
-                    "pass": {
-                        "1": {
-                            "method": "evt",
-                            "params": {
-                                "type": "telemetry_periodical",
-                                "val": null
-                            },
-                            "port": 3
-                        }
-                    }
                 }
             }
         },
@@ -375,10 +386,10 @@
                 "val": "on"
             },
             "cabinet_door": {
-                "val": "off"
+                "val": "on"
             },
             "stop_button": {
-                "val": "off"
+                "val": "on"
             },
             "oxygen": {
                 "val": 0

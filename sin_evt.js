@@ -13,10 +13,15 @@ const statusWordMap = sinConfig.status_word || {};
 // payload array [val] veya tek val olabilir
 const rawVal = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;
 
-// hangi sürücüye ait olduğunu meta’dan bul
-const unitid = msg.meta?.unitid;
+// UnitID'yi olabilecek tüm kaynaklardan sırayla dene
+const unitid =
+    msg.meta?.unitid ??
+    msg.unitid ??
+    msg.payload?.unitid ??
+    msg.modbusResponseBuffer?.unitid;
+
 if (unitid === undefined) {
-    node.warn("unitid bilgisi yok (meta.unitid).");
+    node.warn("unitid bilgisi bulunamadı (meta/unitid/payload/modbusResponseBuffer).");
     return null;
 }
 

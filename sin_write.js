@@ -71,6 +71,9 @@ if (type === "fault_ack" && target === "sinamics") {
         modbusMsgs.push(createModbusMsg(faultAckRes, sin.unitid, 99, 1));
     }
 
+    // 🔹 Mesajları gönder
+    sendMsgs(modbusMsgs);
+
 } else if ((type === "off" && (target === "actuators" || target === "power"))) {
     // 🔹 Hemen gönder
     modbusMsgs = doSinamicsOff();

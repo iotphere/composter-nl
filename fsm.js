@@ -73,9 +73,6 @@ if (method === "evt") {
       sendCmd("off", "roof");
     }
 
-  } else if (type === "cabinet_door") {
-    // boş
-
   } else if (type === "stop_button") {
     // boş
   }

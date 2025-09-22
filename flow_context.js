@@ -21,7 +21,6 @@ const flowData = {
           humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: "on"}},
           roof_forward_limit: {map: 4},
           roof_reverse_limit: {map: 5},
-          cabinet_door: {map: 6},
           stop_button: {map: 15}
         }      
       },
@@ -37,7 +36,6 @@ const flowData = {
         config_node: "203_115200_tcp_rtu_rel_out",
         unitid: 13,
         channels: {
-          light: {map: 6},
           buzzer: {map: 7}
         }
       },
@@ -45,9 +43,9 @@ const flowData = {
         config_node: "203_115200_tcp_rtu_rel_out",
         unitid: 14,
         channels: {
-          loader_forward_valve: {map: 4, group: "loader"},
-          loader_reverse_valve: {map: 5, group: "loader"},
-          loader_motor: {map: 6, group: "loader"},
+          loader_forward_valve: {map: 4},
+          loader_reverse_valve: {map: 5},
+          loader_motor: {map: 6},
           power_contactor: {map: 7}
         }
       },
@@ -102,20 +100,6 @@ const flowData = {
           2: {method: "cmd", params: {type: "off", target: "water_pump"}, port: 2}
         }
       },
-      light_pulse: {
-        form: "delay", duration: 2, unit: "s",
-        pass: {
-          1: {method: "cmd", params: {type: "on", target: "light"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "light"}, port: 2}
-        }
-      },
-      light_pwm: {
-        form: "pwm", t_duty: 2, t_cycle: 5, unit: "s",
-        pass: {
-          1: {method: "cmd", params: {type: "on", target: "light"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "light"}, port: 2}
-        }        
-      },
       buzzer_pulse: {
         form: "delay", duration: 2, unit: "s",
         pass: {
@@ -147,7 +131,6 @@ const flowData = {
     humidity_detector_dig_alr_2: {val: "on"},
     roof_forward_limit: {val: "on"},
     roof_reverse_limit: {val: "on"},
-    cabinet_door: {val: "on"},
     stop_button: {val: "on"},
     oxygen: {val: 0},
     humidity: {val: 0}, 
@@ -157,10 +140,10 @@ const flowData = {
     power_contactor: {val: "off"},
     light: {val: "off"},
     buzzer: {val: "off"},  
-    roof: {speed: {set_point: 100}, val: "off"},
-    fan: {speed: {set_point: 100}, val: "off"},
-    water_pump: {speed: {set_point: 100}, val: "off"},
-    discharger: {speed: {set_point: 100}, val: "off"},
+    roof: {val: "off", speed_set_point: 100},
+    fan: {val: "off", speed_set_point: 100},
+    water_pump: {val: "off", speed_set_point: 100},
+    discharger: {val: "off", speed_set_point: 100},
     loader: {val: "off"},
     kwh: {val: 0},
     oxygen_detector_dig: {val: "off"},

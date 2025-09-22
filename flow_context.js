@@ -138,7 +138,6 @@ const flowData = {
     loader_reverse_valve: {val: "off"},
     loader_motor: {val: "off"},
     power_contactor: {val: "off"},
-    light: {val: "off"},
     buzzer: {val: "off"},  
     roof: {val: "off", speed_set_point: 100},
     fan: {val: "off", speed_set_point: 100},

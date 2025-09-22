@@ -55,7 +55,7 @@ if (method === "evt") {
     if (subType) {
         // type dışındaki tüm alanları bir objeye kopyala
         const { type, ...rest } = params;
-        // örn. { motor1: {x:10,y:20,speed:100}} gibi
+        // örn. { motor1: {x:10,y:20}} gibi
         const formatted = { [subType]: rest };
         return [buildTelemetryMsg(formatted), null, null];
     }

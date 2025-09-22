@@ -11,24 +11,23 @@ if (flowData.config?.sinamics?.queue_interval) {
     queueInterval = flowData.config.sinamics.queue_interval;
 }
 
-// --- Kuyrukları node context’te tut ---
-let queueWrite  = context.get("queueWrite")  || [];
-let queueRead   = context.get("queueRead")   || [];
+// --- Kuyrukları node context’te tut, yoksa başlat ---
+let queueWrite  = context.get("queueWrite");
+if (!Array.isArray(queueWrite)) queueWrite = [];
+let queueRead   = context.get("queueRead");
+if (!Array.isArray(queueRead)) queueRead = [];
 let timerActive = context.get("timerActive") || false;
 
-// --- fc alanını payload’dan çek ---
+// --- fc alanını payload’dan güvenli çek ---
 const fc = msg?.payload?.fc;
 
 // --- Mesajı ilgili kuyruğa at ---
 if (fc === 6) {
-    // Write mesajı
     queueWrite.push(msg);
 } else if (fc === 3) {
-    // Read mesajı
     queueRead.push(msg);
 } else {
-    // fc tanımlı değilse görmezden gel
-    return null;
+    return null; // fc tanımlı değilse görmezden gel
 }
 
 // --- Kuyrukları context’e yaz ---
@@ -41,7 +40,7 @@ if (!timerActive) {
     sendNext();
 }
 
-return null; // şimdilik mesaj döndürmüyoruz, node.send() kullanıyoruz
+return null;
 
 /****************************************************
  * Fonksiyonlar
@@ -49,26 +48,26 @@ return null; // şimdilik mesaj döndürmüyoruz, node.send() kullanıyoruz
 function sendNext() {
     // Kuyrukları oku
     let qW = context.get("queueWrite") || [];
-    let qR = context.get("queueRead")  || [];
+    let qR = context.get("queueRead") || [];
 
     let nextMsg = null;
     let port = null;
 
-    // Öncelik: önce write kuyruğu
+    // Öncelik: write kuyruğu
     if (qW.length > 0) {
         nextMsg = qW.shift();
-        port = 2; // sin_writer çıkışı
+        port = 2;
     } else if (qR.length > 0) {
         nextMsg = qR.shift();
-        port = 1; // sin_getter çıkışı
+        port = 1;
     }
 
-    // Kuyrukları geri kaydet
+    // Kuyrukları context’e geri yaz
     context.set("queueWrite", qW);
     context.set("queueRead", qR);
 
     if (nextMsg) {
-        // İki çıkışlı fonksiyon nodu: [out1, out2]
+        // İki çıkışlı: [out1, out2]
         node.send([
             port === 1 ? nextMsg : null,
             port === 2 ? nextMsg : null

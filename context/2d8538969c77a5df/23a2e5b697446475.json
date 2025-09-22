@@ -1,5 +1,18 @@
 {
     "queueWrite": [],
-    "queueRead": [],
-    "timerActive": false
+    "queueRead": [
+        {
+            "payload": {
+                "fc": 3,
+                "unitid": 14,
+                "address": 109,
+                "quantity": 1,
+                "meta": {
+                    "unitid": 14
+                }
+            },
+            "_msgid": "dda8222ac88d1244"
+        }
+    ],
+    "timerActive": true
 }

@@ -41,9 +41,6 @@
                         "roof_reverse_limit": {
                             "map": 5
                         },
-                        "cabinet_door": {
-                            "map": 6
-                        },
                         "stop_button": {
                             "map": 15
                         }
@@ -93,9 +90,6 @@
                     "config_node": "203_115200_tcp_rtu_rel_out",
                     "unitid": 13,
                     "channels": {
-                        "light": {
-                            "map": 6
-                        },
                         "buzzer": {
                             "map": 7
                         }
@@ -106,16 +100,13 @@
                     "unitid": 14,
                     "channels": {
                         "loader_forward_valve": {
-                            "map": 4,
-                            "group": "loader"
+                            "map": 4
                         },
                         "loader_reverse_valve": {
-                            "map": 5,
-                            "group": "loader"
+                            "map": 5
                         },
                         "loader_motor": {
-                            "map": 6,
-                            "group": "loader"
+                            "map": 6
                         },
                         "power_contactor": {
                             "map": 7
@@ -237,53 +228,6 @@
                         }
                     }
                 },
-                "light_pulse": {
-                    "form": "delay",
-                    "duration": 2,
-                    "unit": "s",
-                    "pass": {
-                        "1": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "on",
-                                "target": "light"
-                            },
-                            "port": 2
-                        },
-                        "2": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "off",
-                                "target": "light"
-                            },
-                            "port": 2
-                        }
-                    }
-                },
-                "light_pwm": {
-                    "form": "pwm",
-                    "t_duty": 2,
-                    "t_cycle": 5,
-                    "unit": "s",
-                    "pass": {
-                        "1": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "on",
-                                "target": "light"
-                            },
-                            "port": 2
-                        },
-                        "2": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "off",
-                                "target": "light"
-                            },
-                            "port": 2
-                        }
-                    }
-                },
                 "buzzer_pulse": {
                     "form": "delay",
                     "duration": 2,
@@ -385,9 +329,6 @@
             "roof_reverse_limit": {
                 "val": "on"
             },
-            "cabinet_door": {
-                "val": "on"
-            },
             "stop_button": {
                 "val": "on"
             },
@@ -409,35 +350,24 @@
             "power_contactor": {
                 "val": "on"
             },
-            "light": {
-                "val": "off"
-            },
             "buzzer": {
                 "val": "off"
             },
             "roof": {
-                "speed": {
-                    "set_point": 100
-                },
-                "val": "off"
+                "val": "off",
+                "speed_set_point": 100
             },
             "fan": {
-                "speed": {
-                    "set_point": 100
-                },
-                "val": "off"
+                "val": "off",
+                "speed_set_point": 100
             },
             "water_pump": {
-                "speed": {
-                    "set_point": 100
-                },
-                "val": "off"
+                "val": "off",
+                "speed_set_point": 100
             },
             "discharger": {
-                "speed": {
-                    "set_point": 100
-                },
-                "val": "off"
+                "val": "off",
+                "speed_set_point": 100
             },
             "loader": {
                 "val": "off"

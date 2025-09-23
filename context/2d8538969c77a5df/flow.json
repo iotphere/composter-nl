@@ -177,7 +177,7 @@
                 },
                 "speed_max": 16384,
                 "queue_interval": 50,
-                "power_up_time": 10000
+                "power_up_time": 15000
             },
             "timers": {
                 "fan_pwm": {
@@ -348,7 +348,7 @@
                 "val": "off"
             },
             "power_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "buzzer": {
                 "val": "off"

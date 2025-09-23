@@ -7,24 +7,26 @@
 
 const flowData = flow.get("flow") || {};
 const sinConfig = flowData.config?.sinamics || {};
-const labels = flowData.config?.labels || {true: "on", false: "off"};
+const labels = flowData.config?.labels || { true: "on", false: "off" };
 const statusWordMap = sinConfig.status_word || {};
 
 // payload array [val] veya tek val olabilir
 const rawVal = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;
 
-// UnitID'yi olabilecek tüm kaynaklardan sırayla dene
+// UnitID'yi olabilecek tüm kaynaklardan sırayla dene (en garantili yol)
 const unitid =
-    msg.meta?.unitid ??
-    msg.unitid ??
-    msg.payload?.unitid ??
-    msg.modbusResponseBuffer?.unitid;
+    msg?.unitid ??
+    msg?.payload?.unitid ??
+    msg?.modbusRequest?.unitid ??
+    msg?.modbusResponseBuffer?.unitid ??
+    msg?.input?.unitid;
 
 if (unitid === undefined) {
-    node.warn("unitid bilgisi bulunamadı (meta/unitid/payload/modbusResponseBuffer).");
+    node.warn("sin_evt: unitid bilgisi bulunamadı.");
     return null;
 }
 
+// Hangi kanala ait olduğunu bul
 let targetName = null;
 for (const [name, ch] of Object.entries(sinConfig.channels || {})) {
     if (ch.unitid === unitid) {
@@ -48,7 +50,7 @@ let stateObj = {};
 for (const [key, def] of Object.entries(statusWordMap)) {
     const bitIndex = def.map;
     const bitVal = getBit(rawVal, bitIndex);
-    stateObj[key] = labels[bitVal]; // örn on/off
+    stateObj[key] = labels[bitVal]; // örn. on/off
 }
 
 // Son durumla karşılaştır, değişim varsa gönder

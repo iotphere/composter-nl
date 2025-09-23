@@ -81,7 +81,7 @@ const flowData = {
       },
       speed_max: 16384, // modbus send >> set_point / 100 * speed_max
       queue_interval: 50,
-      power_up_time: 10000
+      power_up_time: 15000
     },
     timers: {      
       fan_pwm: {

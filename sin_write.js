@@ -17,7 +17,7 @@ if (!type || !target) return null;
 const sinamicsChannels = config.sinamics.channels;
 const commandWords = config.sinamics.command_words;
 const speedMax = config.sinamics.speed_max || 16384;
-const powerUpTime = config.sinamics.power_up_time || 10000;
+const powerUpTime = config.sinamics.power_up_time || 15000;
 
 // Speed helper (default=100)
 function getSpeedValue(sp) {

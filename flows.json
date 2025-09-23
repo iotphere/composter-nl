@@ -838,8 +838,8 @@
         ],
         "repeat": "2",
         "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
+        "once": true,
+        "onceDelay": "20",
         "topic": "",
         "payload": "",
         "payloadType": "date",
@@ -1303,7 +1303,7 @@
         "sessionExpiry": ""
     },
     {
-        "id": "05355e5572005887",
+        "id": "8c7b976f06fbe2c3",
         "type": "global-config",
         "env": [],
         "modules": {

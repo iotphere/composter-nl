@@ -22,7 +22,8 @@ const unitid =
     msg?.input?.unitid;
 
 if (unitid === undefined) {
-    node.warn("sin_evt: unitid bilgisi bulunamadı.");
+    node.warn("sin_evt: unitid bilgisi bulunamadı, gelen msg:");
+    node.warn(msg); // 🔹 tüm mesajı dump et
     return null;
 }
 

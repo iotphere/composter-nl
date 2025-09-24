@@ -1,2 +1,14 @@
-.flows.json.backup
+# Önce her şeyi ignore et
+*
+
+# Bu klasörleri sakla
+!context/
+!flows.json
+!.gitignore
+
+# context içinde her şeyi ignore et
+context/*
+
+# ama sadece flow.json dosyasını al
+!context/*/flow.json
 

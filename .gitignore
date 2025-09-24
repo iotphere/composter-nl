@@ -1,14 +1,12 @@
 # Önce her şeyi ignore et
 *
 
-# Bu üç şeyi sakla
+# .gitignore ve flows.json’u dahil et
 !.gitignore
 !flows.json
+
+# context klasörünü ve altındaki flow.json’u dahil et
 !context/
-
-# context içindeki her şeyi ignore et
-context/*
-
-# ama alt klasörlerdeki flow.json dosyalarını al
+!context/*/
 !context/*/flow.json
 

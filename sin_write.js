@@ -118,15 +118,17 @@ if (type === "fault_ack" && target === "sinamics") {
     const unitid = sinamicsChannels[target].unitid;
 
     if (["forward", "reverse", "off"].includes(type)) {
+        // 1️⃣ Speed register (speed_set_point, default 100) — önce gönder
+        const speedValue = getSpeedValue(runtime[target]?.speed_set_point);
+        modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));
+
+        // 2️⃣ Komut word (forward/reverse/off) — sonra gönder
         const value = commandWords[type];
         if (value != null) {
             modbusMsgs.push(createModbusMsg(value, unitid, 99, 1));
             if (!runtime[target]) runtime[target] = {};
             runtime[target].val = type;
         }
-        // Speed register (speed_set_point, default 100)
-        const speedValue = getSpeedValue(runtime[target]?.speed_set_point);
-        modbusMsgs.push(createModbusMsg(speedValue, unitid, 100, 1));
     }
 
     if (type === "speed" && typeof set_point === "number") {

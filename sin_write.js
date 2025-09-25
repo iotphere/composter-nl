@@ -31,7 +31,7 @@ function createModbusMsg(value, unitid, address, quantity = 1) {
 }
 
 // 🔹 TOPLU OFF – sadece off komut word gönderir ve runtime günceller
-function setAllOff() {
+function setAllOff(runtimeObj) {
     const msgs = [];
     for (const [name, sin] of Object.entries(sinamicsChannels)) {
         const unitid = sin.unitid;
@@ -42,19 +42,19 @@ function setAllOff() {
         }
 
         // Runtime güncelle
-        if (!runtime[name]) runtime[name] = {};
-        runtime[name].val = "off";
+        if (!runtimeObj[name]) runtimeObj[name] = {};
+        runtimeObj[name].val = "off";
     }
     return msgs;
 }
 
 // 🔹 TOPLU SPEED – her cihaz için speed_set_point gönderir
-function setAllSpeed() {
+function setAllSpeed(runtimeObj) {
     const msgs = [];
     for (const [name, sin] of Object.entries(sinamicsChannels)) {
         const unitid = sin.unitid;
 
-        const speedValue = getSpeedValue(runtime[name]?.speed_set_point);
+        const speedValue = getSpeedValue(runtimeObj[name]?.speed_set_point);
         msgs.push(createModbusMsg(speedValue, unitid, 100, 1));
     }
     return msgs;
@@ -94,7 +94,10 @@ if (type === "fault_ack" && target === "sinamics") {
 
 /* 🔹 Actuators OFF – eski davranış korunuyor */
 } else if (type === "off" && target === "actuators") {
-    modbusMsgs = [...setAllOff(), ...setAllSpeed()];
+    modbusMsgs = [
+        ...setAllOff(runtime),
+        ...setAllSpeed(runtime)
+    ];
     sendMsgs(modbusMsgs);
 
 /* 🔹 Power OFF – hiçbir işlem yapmadan çık, ama if dursun */
@@ -102,15 +105,21 @@ if (type === "fault_ack" && target === "sinamics") {
     // İstenilen şekilde hiçbir şey yapılmıyor
     return null;
 
-/* 🔹 Power ON – önce bekle, sonra fault ack + speed gönder */
+/* 🔹 Power ON – önce bekle, sonra off + speed gönder (runtime’ı güncel çekerek) */
 } else if (type === "on" && target === "power") {
     setTimeout(() => {
+        // 10 sn sonra güncel flowData çek
+        const currentFlowData = flow.get("flow") || {};
+        if (!currentFlowData.runtime) currentFlowData.runtime = {};
+
         const msgs = [
-            ...setAllOff(),
-            ...setAllSpeed()
+            ...setAllOff(currentFlowData.runtime),
+            ...setAllSpeed(currentFlowData.runtime)
         ];
         sendMsgs(msgs);
-        flow.set("flow", flowData);
+
+        // güncel runtime’ı tekrar kaydet
+        flow.set("flow", currentFlowData);
     }, powerUpTime);
 
 /* 🔹 Bireysel sinamics hedefleri (forward/reverse/off/speed) */
@@ -143,5 +152,6 @@ if (type === "fault_ack" && target === "sinamics") {
     return null; // Sadece sinamics target'larını işler
 }
 
+// güncel flowData’yı kaydet
 flow.set("flow", flowData);
 return null;

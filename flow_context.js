@@ -10,7 +10,7 @@ const flowData = {
   config: {
     labels: {true: "on", false: "off"},
     io: {
-      queue_interval: 50,
+      queue_interval: 100,
       digital_inputs: {
         config_node: "201_115200_tcp_rtu_dig_inp",
         unitid: 11,

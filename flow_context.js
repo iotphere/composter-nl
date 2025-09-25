@@ -80,7 +80,7 @@ const flowData = {
         direction: {map: 14}
       },
       speed_max: 16384, // modbus send >> set_point / 100 * speed_max
-      queue_interval: 50,
+      queue_interval: 100,
       power_up_time: 15000
     },
     timers: {      

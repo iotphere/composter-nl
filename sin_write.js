@@ -106,7 +106,7 @@ if (type === "fault_ack" && target === "sinamics") {
 } else if (type === "on" && target === "power") {
     setTimeout(() => {
         const msgs = [
-            ...ackAllFault(),
+            ...setAllOff(),
             ...setAllSpeed()
         ];
         sendMsgs(msgs);

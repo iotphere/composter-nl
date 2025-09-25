@@ -6,7 +6,7 @@
 
 // --- Config’ten queue_interval çek ---
 let flowData = flow.get("flow") || {};
-let queueInterval = 50; // default
+let queueInterval = 100; // default
 if (flowData.config?.sinamics?.queue_interval) {
     queueInterval = flowData.config.sinamics.queue_interval;
 }

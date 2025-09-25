@@ -6,7 +6,7 @@
                 "false": "off"
             },
             "io": {
-                "queue_interval": 50,
+                "queue_interval": 100,
                 "digital_inputs": {
                     "config_node": "201_115200_tcp_rtu_dig_inp",
                     "unitid": 11,
@@ -176,7 +176,7 @@
                     }
                 },
                 "speed_max": 16384,
-                "queue_interval": 50,
+                "queue_interval": 100,
                 "power_up_time": 15000
             },
             "timers": {

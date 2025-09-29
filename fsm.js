@@ -45,25 +45,7 @@ function sendEvt(type, extraParams = {}) {
 // --- Ana mesaj işleme ---
 if (method === "evt") {
 
-  if (type === "oxygen_detector_dig") {
-    if (currentState === "start") {
-      if (val === "off") {
-        sendCmd("on", "fan_pwm");
-      } else if (val === "on") {
-        sendCmd("off", "fan_pwm");
-      }
-    }
-
-  } else if (type === "humidity_detector_ang") {
-    if (currentState === "start") {
-      if (val === "off") {
-        sendCmd("on", "water_pump_pwm");
-      } else if (val === "on") {
-        sendCmd("off", "water_pump_pwm");
-      }
-    }
-
-  } else if (type === "roof_forward_limit") {
+  if (type === "roof_forward_limit") {
     if (val === "off") {
       sendCmd("off", "roof");
     }
@@ -82,16 +64,8 @@ if (method === "evt") {
   if (target === "fsm") {
 
     if (type === "start") {
-      if (runtime.oxygen_detector_dig.val === "off") {
-        sendCmd("on", "fan_pwm");
-      } else if (runtime.oxygen_detector_dig.val === "on") {
-        sendCmd("off", "fan_pwm");
-      }
-      if (runtime.humidity_detector_ang.val === "off") {
-        sendCmd("on", "water_pump_pwm");
-      } else if (runtime.humidity_detector_ang.val === "on") {
-        sendCmd("off", "water_pump_pwm");
-      }
+      sendCmd("on", "water_pump_pwm");
+      sendCmd("on", "fan_pwm");
       sendCmd("on", "day_counter");
       transition("start");
 

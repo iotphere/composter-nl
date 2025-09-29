@@ -1,4 +1,4 @@
-// === RELAYS_WRITE.JS — FIXED POWER_BIT ORDER ===
+// === RELAYS_WRITE.JS — WITH ROOF CONTROL INTEGRATED ===
 
 // ===== const / başlangıç =====
 const flowData = flow.get("flow");
@@ -13,7 +13,7 @@ if (payload.method !== "cmd" || typeof payload.params !== "object") return null;
 const { type, target } = payload.params || {};
 if (!type || !target) return null;
 
-// local arrays (work on these only)
+// local arrays
 let arr1 = context.get("last_write_array_1") || Array(8).fill(false);
 let arr2 = context.get("last_write_array_2") || Array(8).fill(false);
 
@@ -59,15 +59,14 @@ function computePowerNewValue(preservePower, setPower) {
   return false;
 }
 
-// ===== FIXED resetRelays =====
+// ===== resetRelays =====
 function resetRelays({ preservePower = false, setPower = null } = {}) {
-  // 1. tümünü sıfırla
   arr1.fill(false);
   arr2.fill(false);
 
-  // 2. loader ve diğer röleleri kapat
+  // diğer röleleri kapat
   Object.keys(relayChannels).forEach(name => {
-    if (name === "power_contactor") return; // power bitini atla
+    if (name === "power_contactor") return; 
     const ch = relayChannels[name];
     const targetArray = (ch.unitid === unitids[1]) ? arr1 : arr2;
     targetArray[ch.map] = false;
@@ -83,25 +82,31 @@ function resetRelays({ preservePower = false, setPower = null } = {}) {
     sendEvtIfChanged("loader", "off");
   }
 
-  // 3. EN SON power bit
+  // roof group off
+  if (config.io.relay_groups?.roof) {
+    Object.keys(config.io.relay_groups.roof).forEach(k => {
+      const r = getRelayInfo(k);
+      if (r) r.array[r.bit] = false;
+    });
+    sendEvtIfChanged("roof", "off");
+  }
+
+  // power bit
   const newPowerBool = computePowerNewValue(preservePower, setPower);
   if (POWER_BIT !== undefined) {
     arr2[POWER_BIT] = !!newPowerBool;
     sendEvtIfChanged("power_contactor", labels[!!newPowerBool]);
   }
 
-  // 4. persist arrays
   context.set("last_write_array_1", arr1);
   context.set("last_write_array_2", arr2);
 
-  // 5. FC6 mesajlarını üret
   const msgs = [];
   if (unitids[1] != null) msgs.push(createRelayMsgFromArray(arr1, unitids[1], "last_write_array_1"));
   if (unitids[2] != null) msgs.push(createRelayMsgFromArray(arr2, unitids[2], "last_write_array_2"));
   node.send([msgs, null]);
 }
 
-// ===== other functions unchanged =====
 function writeSingleRelay(name, setOn) {
   const info = getRelayInfo(name);
   if (!info) return;
@@ -111,6 +116,7 @@ function writeSingleRelay(name, setOn) {
   node.send([[ createRelayMsgFromArray(info.array, info.unitid, info.arrayName) ], null]);
 }
 
+// ===== Loader Handler =====
 function handleLoaderCmd(cmdType) {
   if (!config.io.relay_groups?.loader) return;
   const keys = Object.keys(config.io.relay_groups.loader || {});
@@ -138,12 +144,40 @@ function handleLoaderCmd(cmdType) {
   node.send([uniqueMsgs, null]);
 }
 
+// ===== Roof Handler (NEW) =====
+function handleRoofCmd(cmdType) {
+  if (!config.io.relay_groups?.roof) return;
+  const keys = Object.keys(config.io.relay_groups.roof || {});
+  const fwdKey = keys[0], revKey = keys[1];
+  const fwd = getRelayInfo(fwdKey), rev = getRelayInfo(revKey);
+  if (!(fwd && rev)) return;
+
+  [fwd, rev].forEach(r => r.array[r.bit] = false);
+
+  if (cmdType === "forward") { fwd.array[fwd.bit] = true; }
+  else if (cmdType === "reverse") { rev.array[rev.bit] = true; }
+
+  context.set(fwd.arrayName, fwd.array);
+  context.set(rev.arrayName, rev.array);
+
+  sendEvtIfChanged("roof", cmdType);
+  sendEvtIfChanged(fwdKey, fwd.array[fwd.bit] ? labels[true] : labels[false]);
+  sendEvtIfChanged(revKey, rev.array[rev.bit] ? labels[true] : labels[false]);
+
+  const msgs = [];
+  [fwd, rev].forEach(r => msgs.push(createRelayMsgFromArray(r.array, r.unitid, r.arrayName)));
+  const uniqueMsgs = Array.from(new Map(msgs.map(m => [m.payload.unitid, m])).values());
+  node.send([uniqueMsgs, null]);
+}
+
 // ===== main flow =====
 if ((type === "off" && target === "actuators") || (type === "off" && target === "power") || (type === "on" && target === "power")) {
   const args = (target === "actuators") ? { preservePower: true } : { setPower: (type === "on") };
   resetRelays(args);
 } else if (target === "loader") {
   handleLoaderCmd(type);
+} else if (target === "roof") {
+  handleRoofCmd(type);
 } else {
   writeSingleRelay(target, type === "on");
 }

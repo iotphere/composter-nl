@@ -36,6 +36,8 @@ const flowData = {
         config_node: "203_115200_tcp_rtu_rel_out",
         unitid: 13,
         channels: {
+          roof_forward_contactor: {map: 0},
+          roof_reverse_contactor: {map: 1},
           buzzer: {map: 7}
         }
       },
@@ -50,6 +52,10 @@ const flowData = {
         }
       },
       relay_groups: {
+        roof: {
+          roof_forward_contactor: null,
+          roof_reverse_contactor: null,
+        },
         loader: {
           loader_motor: null,
           loader_forward_valve: null,
@@ -67,7 +73,6 @@ const flowData = {
     sinamics: {
       config_node: "202_9600_tcp_rtu_sinamics",
       channels: {
-        roof: {unitid: 11},
         fan: {unitid: 12},
         water_pump: {unitid: 13},
         discharger: {unitid: 14}
@@ -125,31 +130,33 @@ const flowData = {
     }
   },
   runtime: {
+    oxygen: {val: 0},
     oxygen_detector_dig_alr_1: {val: "on"},
     oxygen_detector_dig_alr_2: {val: "on"},
+    oxygen_detector_dig: {val: "off"},
+    oxygen_detector_ang: {val: "off"},
+    humidity: {val: 0}, 
     humidity_detector_dig_alr_1: {val: "on"},
     humidity_detector_dig_alr_2: {val: "on"},
+    humidity_detector_dig: {val: "off"},
+    humidity_detector_ang: {val: "off"},
+    kwh: {val: 0},
+    kwh_detector: {val: "off"},
+    stop_button: {val: "on"},
+    power_contactor: {val: "off"},
+    buzzer: {val: "off"},  
+    roof: {val: "off"},
+    roof_forward_contactor: {val: "off"},
+    roof_reverse_contactor: {val: "off"},
     roof_forward_limit: {val: "on"},
     roof_reverse_limit: {val: "on"},
-    stop_button: {val: "on"},
-    oxygen: {val: 0},
-    humidity: {val: 0}, 
+    loader: {val: "off"},
     loader_forward_valve: {val: "off"},
     loader_reverse_valve: {val: "off"},
     loader_motor: {val: "off"},
-    power_contactor: {val: "off"},
-    buzzer: {val: "off"},  
-    roof: {val: "off", speed_set_point: 100},
     fan: {val: "off", speed_set_point: 100},
     water_pump: {val: "off", speed_set_point: 100},
     discharger: {val: "off", speed_set_point: 100},
-    loader: {val: "off"},
-    kwh: {val: 0},
-    oxygen_detector_dig: {val: "off"},
-    oxygen_detector_ang: {val: "off"},
-    humidity_detector_dig: {val: "off"},
-    humidity_detector_ang: {val: "off"},
-    kwh_detector: {val: "off"},
     fsm: {val: "end"}
   }
 }

@@ -980,7 +980,6 @@
         "id": "0dfb91744e6dc6e8",
         "type": "inject",
         "z": "2d8538969c77a5df",
-        "d": true,
         "name": "sin_tick",
         "props": [
             {
@@ -990,7 +989,7 @@
         "repeat": "2",
         "crontab": "",
         "once": true,
-        "onceDelay": "25",
+        "onceDelay": "20",
         "topic": "",
         "payload": "",
         "payloadType": "date",

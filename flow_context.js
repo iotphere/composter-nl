@@ -21,7 +21,7 @@ const flowData = {
           humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: "on"}},
           //roof_forward_limit: {map: 4},
           //roof_reverse_limit: {map: 5},
-          stop_button: {map: 15}
+          //stop_button: {map: 15}
         }      
       },
       analog_inputs: {
@@ -142,7 +142,7 @@ const flowData = {
     humidity_detector_ang: {val: "off"},
     kwh: {val: 0},
     kwh_detector: {val: "off"},
-    stop_button: {val: "on"},
+    //stop_button: {val: "on"},
     power_contactor: {val: "off"},
     buzzer: {val: "off"},  
     roof: {val: "off"},

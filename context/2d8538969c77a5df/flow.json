@@ -346,7 +346,7 @@
                 "val": "off"
             },
             "power_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "buzzer": {
                 "val": "off"

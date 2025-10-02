@@ -34,9 +34,6 @@
                             "pro": {
                                 "humidity_detector_dig": "on"
                             }
-                        },
-                        "stop_button": {
-                            "map": 15
                         }
                     }
                 },
@@ -348,11 +345,8 @@
             "kwh_detector": {
                 "val": "off"
             },
-            "stop_button": {
-                "val": "on"
-            },
             "power_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "buzzer": {
                 "val": "off"

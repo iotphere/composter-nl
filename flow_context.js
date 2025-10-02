@@ -19,8 +19,8 @@ const flowData = {
           oxygen_detector_dig_alr_2: {map: 1, pro: {oxygen_detector_dig: "on"}},
           humidity_detector_dig_alr_1: {map: 2, pro: {humidity_detector_dig: "off"}},
           humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: "on"}},
-          roof_forward_limit: {map: 4},
-          roof_reverse_limit: {map: 5},
+          //roof_forward_limit: {map: 4},
+          //roof_reverse_limit: {map: 5},
           stop_button: {map: 15}
         }      
       },
@@ -148,8 +148,8 @@ const flowData = {
     roof: {val: "off"},
     roof_forward_contactor: {val: "off"},
     roof_reverse_contactor: {val: "off"},
-    roof_forward_limit: {val: "on"},
-    roof_reverse_limit: {val: "on"},
+    //roof_forward_limit: {val: "on"},
+    //roof_reverse_limit: {val: "on"},
     loader: {val: "off"},
     loader_forward_valve: {val: "off"},
     loader_reverse_valve: {val: "off"},

@@ -43,23 +43,7 @@ function sendEvt(type, extraParams = {}) {
 }
 
 // --- Ana mesaj işleme ---
-if (method === "evt") {
-
-  if (type === "roof_forward_limit") {
-    if (val === "off") {
-      sendCmd("off", "roof");
-    }
-
-  } else if (type === "roof_reverse_limit") {
-    if (val === "off") {
-      sendCmd("off", "roof");
-    }
-
-  } else if (type === "stop_button") {
-    // boş
-  }
-
-} else if (method === "cmd") {
+if (method === "cmd") {
 
   if (target === "fsm") {
 
@@ -81,19 +65,6 @@ if (method === "evt") {
       transition("end");
     }
 
-  } else if (target === "roof") {
-
-    if (type === "forward") {
-      if (runtime.roof_forward_limit.val === "off") {
-        return null;
-      }
-    } else if (type === "reverse") {
-      if (runtime.roof_reverse_limit.val === "off") {
-        return null;
-      }
-    }
-    outputs[0].push(msg);     
-    
   } else {
     outputs[0].push(msg);
   }

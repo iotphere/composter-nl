@@ -14,32 +14,55 @@ if (!channelDef || !channelDef.pro) return null;
 
 const changed = [];
 
+// örn. humidity.pro = { humidity_detector_ang: { low: 30, high: 60 } }
 for (const [detectorKey, thresholds] of Object.entries(channelDef.pro)) {
-    if (!thresholds || typeof thresholds.on !== "number" || typeof thresholds.off !== "number") continue;
+    if (!thresholds || typeof thresholds.low !== "number" || typeof thresholds.high !== "number") continue;
 
-    const prevVal = runtime[detectorKey]?.val ?? "off";
-    let newVal = null;
+    // 2 key oluştur: ..._ang_low ve ..._ang_high
+    const lowKey = `${detectorKey}_low`;
+    const highKey = `${detectorKey}_high`;
 
-    // Kural 1: runtime off + val >= on → on
-    if (prevVal === "off" && val >= thresholds.on) {
-        newVal = "on";
-    }
-    // Kural 2: runtime on + val <= off → off
-    else if (prevVal === "on" && val <= thresholds.off) {
-        newVal = "off";
-    }
+    // önce mevcut durumları oku
+    const prevLow = runtime[lowKey]?.val ?? "on";
+    const prevHigh = runtime[highKey]?.val ?? "on";
 
-    if (newVal && newVal !== prevVal) {
-        runtime[detectorKey] = { val: newVal };
-        flow.set("flow", flowData);
+    let newLow = prevLow;
+    let newHigh = prevHigh;
 
+    // low alanı için kural: val < low → off, aksi → on
+    if (val < thresholds.low) newLow = "off";
+    else newLow = "on";
+
+    // high alanı için kural: val > high → off, aksi → on
+    if (val > thresholds.high) newHigh = "off";
+    else newHigh = "on";
+
+    // değişim varsa runtime'ı güncelle ve mesaj oluştur
+    if (newLow !== prevLow) {
+        runtime[lowKey] = { val: newLow };
         changed.push({
             payload: {
                 method: "evt",
-                params: { type: detectorKey, val: newVal }
+                params: { type: lowKey, val: newLow }
+            }
+        });
+    }
+
+    if (newHigh !== prevHigh) {
+        runtime[highKey] = { val: newHigh };
+        changed.push({
+            payload: {
+                method: "evt",
+                params: { type: highKey, val: newHigh }
             }
         });
     }
 }
 
-return changed.length ? [changed] : null;
+// yalnızca değişiklik varsa flow context'i güncelle
+if (changed.length) {
+    flow.set("flow", flowData);
+    return [changed];
+}
+
+return null;

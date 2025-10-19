@@ -15,12 +15,8 @@ const flowData = {
         config_node: "201_115200_tcp_rtu_dig_inp",
         unitid: 11,
         channels: {        
-          oxygen_detector_dig_alr_1: {map: 0, pro: {oxygen_detector_dig: "off"}},
-          oxygen_detector_dig_alr_2: {map: 1, pro: {oxygen_detector_dig: "on"}},
-          humidity_detector_dig_alr_1: {map: 2, pro: {humidity_detector_dig: "off"}},
-          humidity_detector_dig_alr_2: {map: 3, pro: {humidity_detector_dig: "on"}},
-          //roof_forward_limit: {map: 4},
-          //roof_reverse_limit: {map: 5},
+          oxygen_detector_dig_low: {map: 0},
+          oxygen_detector_dig_high: {map: 1},
           //stop_button: {map: 15}
         }      
       },
@@ -28,8 +24,8 @@ const flowData = {
         config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
         unitid: 12,        
         channels: {
-          oxygen: {map: 0, change: 0.2, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0.5, out_max: 20.9}, pro: {oxygen_detector_ang: {off: 3.2, on: 14.7}}},
-          humidity: {map: 1, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {off: 30, on: 60}}}
+          oxygen: {map: 0, change: 0.2, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0.5, out_max: 20.9}},
+          humidity: {map: 1, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {low: 30, high: 60}}}
         }
       },
       relay_outputs_1: {
@@ -67,7 +63,7 @@ const flowData = {
       config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
       unitid: 2,      
       channels: {
-        kwh: {map: 0, factor: 0.01, change: 2, pro: {kwh_detector: {off: 30, on: 60}}}
+        kwh: {map: 0, factor: 0.01, change: 2}
       }
     },  
     sinamics: {
@@ -131,25 +127,18 @@ const flowData = {
   },
   runtime: {
     oxygen: {val: 0},
-    oxygen_detector_dig_alr_1: {val: "on"},
-    oxygen_detector_dig_alr_2: {val: "on"},
-    oxygen_detector_dig: {val: "off"},
-    oxygen_detector_ang: {val: "off"},
+    oxygen_detector_dig_low: {val: "on"},
+    oxygen_detector_dig_high: {val: "on"},
     humidity: {val: 0}, 
-    humidity_detector_dig_alr_1: {val: "on"},
-    humidity_detector_dig_alr_2: {val: "on"},
-    humidity_detector_dig: {val: "off"},
-    humidity_detector_ang: {val: "off"},
+    humidity_detector_ang_low: {val: "on"},
+    humidity_detector_ang_high: {val: "on"},
     kwh: {val: 0},
-    kwh_detector: {val: "off"},
     //stop_button: {val: "on"},
     power_contactor: {val: "off"},
     buzzer: {val: "off"},  
     roof: {val: "off"},
     roof_forward_contactor: {val: "off"},
     roof_reverse_contactor: {val: "off"},
-    //roof_forward_limit: {val: "on"},
-    //roof_reverse_limit: {val: "on"},
     loader: {val: "off"},
     loader_forward_valve: {val: "off"},
     loader_reverse_valve: {val: "off"},

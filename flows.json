@@ -302,7 +302,7 @@
                 "p": "payload"
             }
         ],
-        "repeat": "10",
+        "repeat": "2",
         "crontab": "",
         "once": true,
         "onceDelay": "10",

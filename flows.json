@@ -89,9 +89,9 @@
         "serialAsciiResponseStartDelimiter": "0x3A",
         "unit_id": "",
         "commandDelay": 1,
-        "clientTimeout": "1000",
+        "clientTimeout": 1000,
         "reconnectOnTimeout": true,
-        "reconnectTimeout": "2000",
+        "reconnectTimeout": 2000,
         "parallelUnitIdsAllowed": true,
         "showErrors": false,
         "showWarnings": true,
@@ -216,7 +216,7 @@
         "wires": [
             [
                 "54a9a79a7c485b62",
-                "0b3654ab51cfd27c"
+                "b7cfbb0388923d83"
             ]
         ]
     },
@@ -302,7 +302,7 @@
                 "p": "payload"
             }
         ],
-        "repeat": "2",
+        "repeat": "5",
         "crontab": "",
         "once": true,
         "onceDelay": "10",
@@ -597,7 +597,7 @@
         "wires": [
             [
                 "22442867c06e05b8",
-                "0b3654ab51cfd27c"
+                "a4a40c57356171cc"
             ]
         ]
     },
@@ -607,7 +607,7 @@
         "z": "2d8538969c77a5df",
         "name": "analog_inputs_getter",
         "showStatusActivities": false,
-        "showErrors": false,
+        "showErrors": true,
         "showWarnings": true,
         "logIOActivities": false,
         "server": "e707d8a8f03b29cf",
@@ -622,7 +622,8 @@
         "y": 280,
         "wires": [
             [
-                "db72d07653f1bbe9"
+                "db72d07653f1bbe9",
+                "d6a7cf8e8bda8f72"
             ],
             []
         ]
@@ -965,6 +966,55 @@
         "statusType": "auto",
         "x": 1150,
         "y": 60,
+        "wires": []
+    },
+    {
+        "id": "d6a7cf8e8bda8f72",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "b7cfbb0388923d83",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "a4a40c57356171cc",
+        "type": "debug",
+        "z": "2d8538969c77a5df",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 100,
         "wires": []
     }
 ]

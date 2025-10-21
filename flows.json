@@ -216,7 +216,7 @@
         "wires": [
             [
                 "54a9a79a7c485b62",
-                "24b13f8b3f651ce2"
+                "0b3654ab51cfd27c"
             ]
         ]
     },
@@ -302,7 +302,7 @@
                 "p": "payload"
             }
         ],
-        "repeat": "2",
+        "repeat": "5",
         "crontab": "",
         "once": true,
         "onceDelay": "10",
@@ -597,7 +597,7 @@
         "wires": [
             [
                 "22442867c06e05b8",
-                "70e5dc5aa3b391bd"
+                "0b3654ab51cfd27c"
             ]
         ]
     },
@@ -622,8 +622,7 @@
         "y": 280,
         "wires": [
             [
-                "db72d07653f1bbe9",
-                "4d45c430d252b24e"
+                "db72d07653f1bbe9"
             ],
             []
         ]
@@ -966,56 +965,6 @@
         "statusType": "auto",
         "x": 1150,
         "y": 60,
-        "wires": []
-    },
-    {
-        "id": "4d45c430d252b24e",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 650,
-        "y": 40,
-        "wires": []
-    },
-    {
-        "id": "24b13f8b3f651ce2",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": true,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 650,
-        "y": 80,
-        "wires": []
-    },
-    {
-        "id": "70e5dc5aa3b391bd",
-        "type": "debug",
-        "z": "2d8538969c77a5df",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 640,
-        "y": 120,
         "wires": []
     }
 ]

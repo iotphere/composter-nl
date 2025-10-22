@@ -47,8 +47,8 @@
                             "scale": {
                                 "in_min": 4.81,
                                 "in_max": 20,
-                                "out_min": 1,
-                                "out_max": 20.9
+                                "out_min": 1.63,
+                                "out_max": 21.53
                             }
                         }
                     }
@@ -63,7 +63,10 @@
                         "roof_reverse_contactor": {
                             "map": 1
                         },
-                        "buzzer": {
+                        "light": {
+                            "map": 6
+                        },
+                        "water_valve": {
                             "map": 7
                         }
                     }
@@ -114,9 +117,6 @@
                 "channels": {
                     "fan": {
                         "unitid": 12
-                    },
-                    "water_pump": {
-                        "unitid": 13
                     },
                     "discharger": {
                         "unitid": 14
@@ -172,31 +172,7 @@
                         }
                     }
                 },
-                "water_pump_pwm": {
-                    "form": "pwm",
-                    "t_duty": 15,
-                    "t_cycle": 360,
-                    "unit": "min",
-                    "pass": {
-                        "1": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "forward",
-                                "target": "water_pump"
-                            },
-                            "port": 2
-                        },
-                        "2": {
-                            "method": "cmd",
-                            "params": {
-                                "type": "off",
-                                "target": "water_pump"
-                            },
-                            "port": 2
-                        }
-                    }
-                },
-                "buzzer_pulse": {
+                "light_pulse": {
                     "form": "delay",
                     "duration": 2,
                     "unit": "s",
@@ -205,7 +181,7 @@
                             "method": "cmd",
                             "params": {
                                 "type": "on",
-                                "target": "buzzer"
+                                "target": "light"
                             },
                             "port": 2
                         },
@@ -213,23 +189,23 @@
                             "method": "cmd",
                             "params": {
                                 "type": "off",
-                                "target": "buzzer"
+                                "target": "light"
                             },
                             "port": 2
                         }
                     }
                 },
-                "buzzer_pwm": {
+                "water_valve_pwm": {
                     "form": "pwm",
-                    "t_duty": 2,
-                    "t_cycle": 5,
-                    "unit": "s",
+                    "t_duty": 15,
+                    "t_cycle": 1440,
+                    "unit": "min",
                     "pass": {
                         "1": {
                             "method": "cmd",
                             "params": {
                                 "type": "on",
-                                "target": "buzzer"
+                                "target": "water_valve"
                             },
                             "port": 2
                         },
@@ -237,7 +213,7 @@
                             "method": "cmd",
                             "params": {
                                 "type": "off",
-                                "target": "buzzer"
+                                "target": "water_valve"
                             },
                             "port": 2
                         }
@@ -303,7 +279,7 @@
             "power_contactor": {
                 "val": "off"
             },
-            "buzzer": {
+            "water_valve": {
                 "val": "off"
             },
             "roof": {
@@ -328,10 +304,6 @@
                 "val": "off"
             },
             "fan": {
-                "val": "off",
-                "speed_set_point": 100
-            },
-            "water_pump": {
                 "val": "off",
                 "speed_set_point": 100
             },

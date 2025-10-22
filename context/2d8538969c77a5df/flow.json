@@ -282,6 +282,9 @@
             "water_valve": {
                 "val": "off"
             },
+            "light": {
+                "val": "off"
+            },
             "roof": {
                 "val": "off"
             },

@@ -24,8 +24,8 @@ const flowData = {
         config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
         unitid: 12,        
         channels: {
-          oxygen: {map: 0, change: 0.2, factor: 1.00, scale: {in_min: 4.81, in_max: 20, out_min: 1, out_max: 20.9}},
-          humidity: {map: 1, change: 3, factor: 1.00, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {low: 30, high: 60}}}
+          humidity: {map: 6, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {low: 30, high: 60}}},
+          oxygen: {map: 7, change: 0.2, factor: 0.01, scale: {in_min: 4.81, in_max: 20, out_min: 1.63, out_max: 21.53}} // +0.63 offset to out_min 1 and out_max 20.9
         }
       },
       relay_outputs_1: {
@@ -34,7 +34,7 @@ const flowData = {
         channels: {
           roof_forward_contactor: {map: 0},
           roof_reverse_contactor: {map: 1},
-          buzzer: {map: 7}
+          water_valve: {map: 7}
         }
       },
       relay_outputs_2: {
@@ -70,7 +70,6 @@ const flowData = {
       config_node: "202_9600_tcp_rtu_sinamics",
       channels: {
         fan: {unitid: 12},
-        water_pump: {unitid: 13},
         discharger: {unitid: 14}
       },
       command_words: {forward: 1151, reverse: 3199, off: 1150, fault_ack_res: 1150, fault_ack_set: 1278},
@@ -93,26 +92,18 @@ const flowData = {
           2: {method: "cmd", params: {type: "off", target: "fan"}, port: 2}
         }
       },
-      water_pump_pwm: {
-        form: "pwm",
-        t_duty: 15, t_cycle: 360, unit: "min",
-        pass: {
-          1: {method: "cmd", params: {type: "forward", target: "water_pump"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "water_pump"}, port: 2}
-        }
-      },
-      buzzer_pulse: {
+      water_valve_pulse: {
         form: "delay", duration: 2, unit: "s",
         pass: {
-          1: {method: "cmd", params: {type: "on", target: "buzzer"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "buzzer"}, port: 2}
+          1: {method: "cmd", params: {type: "on", target: "water_valve"}, port: 2},
+          2: {method: "cmd", params: {type: "off", target: "water_valve"}, port: 2}
         }
       },
-      buzzer_pwm: {
+      water_valve_pwm: {
         form: "pwm", t_duty: 2, t_cycle: 5, unit: "s",
         pass: {
-          1: {method: "cmd", params: {type: "on", target: "buzzer"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "buzzer"}, port: 2}
+          1: {method: "cmd", params: {type: "on", target: "water_valve"}, port: 2},
+          2: {method: "cmd", params: {type: "off", target: "water_valve"}, port: 2}
         }        
       },
       day_counter: {
@@ -135,7 +126,7 @@ const flowData = {
     kwh: {val: 0},
     //stop_button: {val: "on"},
     power_contactor: {val: "off"},
-    buzzer: {val: "off"},  
+    water_valve: {val: "off"},  
     roof: {val: "off"},
     roof_forward_contactor: {val: "off"},
     roof_reverse_contactor: {val: "off"},
@@ -144,7 +135,6 @@ const flowData = {
     loader_reverse_valve: {val: "off"},
     loader_motor: {val: "off"},
     fan: {val: "off", speed_set_point: 100},
-    water_pump: {val: "off", speed_set_point: 100},
     discharger: {val: "off", speed_set_point: 100},
     fsm: {val: "end"}
   }

@@ -48,7 +48,7 @@ if (method === "cmd") {
   if (target === "fsm") {
 
     if (type === "start") {
-      sendCmd("on", "water_pump_pwm");
+      sendCmd("on", "water_valve_pwm");
       sendCmd("on", "fan_pwm");
       sendCmd("on", "day_counter");
       transition("start");
@@ -56,7 +56,7 @@ if (method === "cmd") {
     } else if (type === "dry") {
       sendCmd("skip", "day_counter");
       sendCmd("on", "fan_pwm");
-      sendCmd("off", "water_pump_pwm");
+      sendCmd("off", "water_valve_pwm");
       transition("dry");
 
     } else if (type === "end") {

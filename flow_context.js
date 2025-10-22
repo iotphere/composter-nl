@@ -128,6 +128,7 @@ const flowData = {
     //stop_button: {val: "on"},
     power_contactor: {val: "off"},
     water_valve: {val: "off"},  
+    light: {val: "off"},
     roof: {val: "off"},
     roof_forward_contactor: {val: "off"},
     roof_reverse_contactor: {val: "off"},

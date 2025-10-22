@@ -277,7 +277,7 @@
                 "val": 0
             },
             "power_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "water_valve": {
                 "val": "off"

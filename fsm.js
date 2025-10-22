@@ -43,20 +43,56 @@ function sendEvt(type, extraParams = {}) {
 }
 
 // --- Ana mesaj işleme ---
-if (method === "cmd") {
+if (method === "evt") {
+
+  if (type === "oxygen_detector_dig_low") {
+    if (val === "off") {
+      if (currentState === "start") {
+        sendCmd("on", "fan_pwm");
+      }      
+    }
+  } else if (type === "oxygen_detector_dig_high") {
+    if (val === "off") {
+      if (currentState === "start") {
+        sendCmd("off", "fan_pwm");
+      }      
+    }
+  } else if (type === "humidity_detector_ang_low") {
+    if (val === "off") {
+      if (currentState === "start") {
+        sendCmd("on", "water_valve_pwm");
+      }      
+    }
+  } else if (type === "humidity_detector_ang_high") {
+    if (val === "off") {
+      if (currentState === "start") {
+        sendCmd("off", "water_valve_pwm");
+      }      
+    }
+  }
+
+} else if (method === "cmd") {
 
   if (target === "fsm") {
 
     if (type === "start") {
-      sendCmd("on", "water_valve_pwm");
-      sendCmd("on", "fan_pwm");
+      if (runtime.oxygen_detector_dig_high === "on") {
+        sendCmd("on", "fan_pwm");
+      } else {
+        sendCmd("off", "fan_pwm");
+      }
+      if (runtime.humidity_detector_ang_high === "on") {
+        sendCmd("on", "water_valve_pwm");
+      } else {
+        sendCmd("off", "water_valve_pwm");
+      }    
       sendCmd("on", "day_counter");
       transition("start");
 
-    } else if (type === "dry") {
-      sendCmd("skip", "day_counter");
+    } else if (type === "dry") {      
       sendCmd("on", "fan_pwm");
       sendCmd("off", "water_valve_pwm");
+      sendCmd("skip", "day_counter");
       transition("dry");
 
     } else if (type === "end") {

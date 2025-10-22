@@ -34,6 +34,7 @@ const flowData = {
         channels: {
           roof_forward_contactor: {map: 0},
           roof_reverse_contactor: {map: 1},
+          light: {map: 6},
           water_valve: {map: 7}
         }
       },
@@ -92,15 +93,15 @@ const flowData = {
           2: {method: "cmd", params: {type: "off", target: "fan"}, port: 2}
         }
       },
-      water_valve_pulse: {
+      light_pulse: {
         form: "delay", duration: 2, unit: "s",
         pass: {
-          1: {method: "cmd", params: {type: "on", target: "water_valve"}, port: 2},
-          2: {method: "cmd", params: {type: "off", target: "water_valve"}, port: 2}
+          1: {method: "cmd", params: {type: "on", target: "light"}, port: 2},
+          2: {method: "cmd", params: {type: "off", target: "light"}, port: 2}
         }
       },
       water_valve_pwm: {
-        form: "pwm", t_duty: 2, t_cycle: 5, unit: "s",
+        form: "pwm", t_duty: 15, t_cycle: 1440, unit: "min",
         pass: {
           1: {method: "cmd", params: {type: "on", target: "water_valve"}, port: 2},
           2: {method: "cmd", params: {type: "off", target: "water_valve"}, port: 2}

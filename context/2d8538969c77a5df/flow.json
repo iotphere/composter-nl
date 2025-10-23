@@ -251,6 +251,23 @@
                             "port": 3
                         }
                     }
+                },
+                "loader_counter": {
+                    "form": "counter",
+                    "direction": "down",
+                    "interval": 20,
+                    "base": 10,
+                    "unit": "s",
+                    "pass": {
+                        "4": {
+                            "method": "cmd",
+                            "params": {
+                                "type": "loader_counter",
+                                "target": "fsm"
+                            },
+                            "port": 1
+                        }
+                    }
                 }
             }
         },

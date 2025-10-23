@@ -114,7 +114,14 @@ const flowData = {
           3: {method: "cmd", params: {type: "end", target: "fsm"}, port: 1},
           4: {method: "evt", params: {type: "day"}, port: 3} // val buradan sabit gelmeyecek
         }             
+      },
+      loader_counter: {
+        form: "counter", direction: "down", interval: 20, base: 10, unit: "s",
+        pass: {
+          4: {method: "cmd", params: {type: "loader_counter", target: "fsm"}, port: 1}
+        }             
       }
+
     }
   },
   runtime: {

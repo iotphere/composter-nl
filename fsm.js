@@ -1,15 +1,13 @@
 const flowData = flow.get("flow");
-const runtime = flowData.runtime;
-let currentState = runtime.fsm.val;
+if (!flowData) return null;
 
-const payload = msg.payload;
-if (!payload || typeof payload !== "object") return null;
-
-const method = payload.method;
-const params = payload.params || {};
-const type = params.type;
-const target = params.target;
-const val = params.val;
+const runtime = flowData.runtime || {};
+const payload = msg.payload || {};
+const { method, params } = payload;
+const type = params?.type;
+const val = params?.val;
+const target = params?.target;
+let currentState = runtime.fsm?.val;
 
 const outputs = [[], []];
 
@@ -45,25 +43,26 @@ function sendEvt(type, extraParams = {}) {
 // --- Ana mesaj işleme ---
 if (method === "evt") {
 
-  if (type === "oxygen_detector_dig_low") {
-    if (val === "off") {
-      if (currentState === "start") {
-        sendCmd("on", "fan_pwm");
-      }      
+  if (type === "oxygen_detector_dig_low" && val === "off") {
+    if (currentState === "start") {
+      sendCmd("on", "loader_counter");
     }
-  } else if (type === "oxygen_detector_dig_high") {
-    if (val === "off") {
-      if (currentState === "start") {
-        sendCmd("off", "fan_pwm");
-      }      
+  }
+  else if (type === "oxygen_detector_dig_high" && val === "off") {
+    if (currentState === "start") {
+      sendCmd("off", "loader_counter");
+      sendCmd("off", "loader");
+      sendCmd("off", "fan_pwm");
     }
-  } else if (type === "humidity_detector_ang_low") {
+  }
+  else if (type === "humidity_detector_ang_low") {
     if (val === "off") {
       if (currentState === "start") {
         sendCmd("on", "water_valve_pwm");
       }      
     }
-  } else if (type === "humidity_detector_ang_high") {
+  }  
+  else if (type === "humidity_detector_ang_high") {
     if (val === "off") {
       if (currentState === "start") {
         sendCmd("off", "water_valve_pwm");
@@ -75,10 +74,24 @@ if (method === "evt") {
 
   if (target === "fsm") {
 
-    if (type === "start") {
+    if (type === "loader_counter") {
+      const n = Number(params?.val);
+      if (Number.isFinite(n)) {
+        if (n > 0) {
+          if (n % 2 === 0) sendCmd("forward", "loader");
+          else sendCmd("reverse", "loader");
+        } else {
+          sendCmd("off", "loader");
+          sendCmd("on", "fan_pwm");
+        }
+      }
+    }
+    else if (type === "start") {
       if (runtime.oxygen_detector_dig_high === "on") {
-        sendCmd("on", "fan_pwm");
+        sendCmd("on", "loader_counter");
       } else {
+        sendCmd("off", "loader_counter");
+        sendCmd("off", "loader");
         sendCmd("off", "fan_pwm");
       }
       if (runtime.humidity_detector_ang_high === "on") {
@@ -89,13 +102,14 @@ if (method === "evt") {
       sendCmd("on", "day_counter");
       transition("start");
 
-    } else if (type === "dry") {      
+    }    
+    else if (type === "dry") {      
       sendCmd("on", "fan_pwm");
       sendCmd("off", "water_valve_pwm");
       sendCmd("skip", "day_counter");
       transition("dry");
-
-    } else if (type === "end") {
+    }    
+    else if (type === "end") {
       sendCmd("off", "timers");
       sendCmd("off", "actuators");
       transition("end");

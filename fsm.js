@@ -87,14 +87,14 @@ if (method === "evt") {
       }
     }
     else if (type === "start") {
-      if (runtime.oxygen_detector_dig_high === "on") {
+      if (runtime.oxygen_detector_dig_high?.val === "on") {
         sendCmd("on", "loader_counter");
       } else {
         sendCmd("off", "loader_counter");
         sendCmd("off", "loader");
         sendCmd("off", "fan_pwm");
       }
-      if (runtime.humidity_detector_ang_high === "on") {
+      if (runtime.humidity_detector_ang_high?.val === "on") {
         sendCmd("on", "water_valve_pwm");
       } else {
         sendCmd("off", "water_valve_pwm");

@@ -164,7 +164,7 @@
         "z": "2d8538969c77a5df",
         "name": "relays_writer",
         "showStatusActivities": false,
-        "showErrors": true,
+        "showErrors": false,
         "showWarnings": true,
         "server": "c3488bd8821ff6d8",
         "emptyMsgOnFail": false,

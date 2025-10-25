@@ -55,20 +55,6 @@ if (method === "evt") {
       sendCmd("off", "fan_pwm");
     }
   }
-  else if (type === "humidity_detector_ang_low") {
-    if (val === "off") {
-      if (currentState === "start") {
-        sendCmd("on", "water_valve_pwm");
-      }      
-    }
-  }  
-  else if (type === "humidity_detector_ang_high") {
-    if (val === "off") {
-      if (currentState === "start") {
-        sendCmd("off", "water_valve_pwm");
-      }      
-    }
-  }
 
 } else if (method === "cmd") {
 
@@ -94,11 +80,7 @@ if (method === "evt") {
         sendCmd("off", "loader");
         sendCmd("off", "fan_pwm");
       }
-      if (runtime.humidity_detector_ang_high?.val === "on") {
-        sendCmd("on", "water_valve_pwm");
-      } else {
-        sendCmd("off", "water_valve_pwm");
-      }    
+      sendCmd("on", "water_valve_pwm");    
       sendCmd("on", "day_counter");
       transition("start");
 

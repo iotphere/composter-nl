@@ -24,7 +24,8 @@ const flowData = {
         config_node: "204_9600_tcp_rtu_ang_inp_eng_met",
         unitid: 12,        
         channels: {
-          humidity: {map: 6, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {low: 30, high: 60}}},
+          temperature: {map: 5, change: 1, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}},
+          //humidity: {map: 6, change: 3, factor: 0.01, scale: {in_min: 4, in_max: 20, out_min: 0, out_max: 100}, pro: {humidity_detector_ang: {low: 30, high: 60}}},
           oxygen: {map: 7, change: 0.2, factor: 0.01, scale: {in_min: 4.81, in_max: 20, out_min: 1.63, out_max: 21.53}} // +0.63 offset to out_min 1 and out_max 20.9
         }
       },
@@ -128,9 +129,10 @@ const flowData = {
     oxygen: {val: 0},
     oxygen_detector_dig_low: {val: "on"},
     oxygen_detector_dig_high: {val: "on"},
-    humidity: {val: 0}, 
-    humidity_detector_ang_low: {val: "on"},
-    humidity_detector_ang_high: {val: "on"},
+    //humidity: {val: 0}, 
+    //humidity_detector_ang_low: {val: "on"},
+    //humidity_detector_ang_high: {val: "on"},
+    temperature: {val: 0},
     kwh: {val: 0},
     //stop_button: {val: "on"},
     power_contactor: {val: "off"},

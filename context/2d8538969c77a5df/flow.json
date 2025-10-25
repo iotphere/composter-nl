@@ -23,21 +23,15 @@
                     "config_node": "204_9600_tcp_rtu_ang_inp_eng_met",
                     "unitid": 12,
                     "channels": {
-                        "humidity": {
-                            "map": 6,
-                            "change": 3,
+                        "temperature": {
+                            "map": 5,
+                            "change": 1,
                             "factor": 0.01,
                             "scale": {
                                 "in_min": 4,
                                 "in_max": 20,
                                 "out_min": 0,
                                 "out_max": 100
-                            },
-                            "pro": {
-                                "humidity_detector_ang": {
-                                    "low": 30,
-                                    "high": 60
-                                }
                             }
                         },
                         "oxygen": {
@@ -281,14 +275,8 @@
             "oxygen_detector_dig_high": {
                 "val": "on"
             },
-            "humidity": {
+            "temperature": {
                 "val": 0
-            },
-            "humidity_detector_ang_low": {
-                "val": "on"
-            },
-            "humidity_detector_ang_high": {
-                "val": "on"
             },
             "kwh": {
                 "val": 0

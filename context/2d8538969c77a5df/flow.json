@@ -232,7 +232,7 @@
                         "3": {
                             "method": "cmd",
                             "params": {
-                                "type": "end",
+                                "type": "finish",
                                 "target": "fsm"
                             },
                             "port": 1
@@ -320,7 +320,7 @@
                 "speed_set_point": 100
             },
             "fsm": {
-                "val": "end"
+                "val": "finished"
             }
         }
     }

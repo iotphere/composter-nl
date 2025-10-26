@@ -112,7 +112,7 @@ const flowData = {
         form: "counter", direction: "down", interval: 1, base: 21, signal: 3, unit: "d",
         pass: {
           2: {method: "cmd", params: {type: "dry", target: "fsm"}, port: 1},
-          3: {method: "cmd", params: {type: "finish", target: "fsm"}, port: 1},
+          3: {method: "cmd", params: {type: "complete", target: "fsm"}, port: 1},
           4: {method: "evt", params: {type: "day"}, port: 3} // val buradan sabit gelmeyecek
         }             
       },
@@ -147,7 +147,7 @@ const flowData = {
     loader_motor: {val: "off"},
     fan: {val: "off", speed_set_point: 100},
     discharger: {val: "off", speed_set_point: 100},
-    fsm: {val: "finished"}
+    fsm: {val: "completed"}
   }
 }
 

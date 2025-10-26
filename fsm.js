@@ -44,12 +44,12 @@ function sendEvt(type, extraParams = {}) {
 if (method === "evt") {
 
   if (type === "oxygen_detector_dig_low" && val === "off") {
-    if (currentState === "start") {
+    if (currentState === "started") {
       sendCmd("on", "loader_counter");
     }
   }
   else if (type === "oxygen_detector_dig_high" && val === "off") {
-    if (currentState === "start") {
+    if (currentState === "started") {
       sendCmd("off", "loader_counter");
       sendCmd("off", "loader");
       sendCmd("off", "fan_pwm");
@@ -82,19 +82,19 @@ if (method === "evt") {
       }
       sendCmd("on", "water_valve_pwm");    
       sendCmd("on", "day_counter");
-      transition("start");
+      transition("started");
 
     }    
     else if (type === "dry") {      
       sendCmd("on", "fan_pwm");
       sendCmd("off", "water_valve_pwm");
       sendCmd("skip", "day_counter");
-      transition("dry");
+      transition("drying");
     }    
-    else if (type === "end") {
+    else if (type === "finish") {
       sendCmd("off", "timers");
       sendCmd("off", "actuators");
-      transition("end");
+      transition("finished");
     }
 
   } else {

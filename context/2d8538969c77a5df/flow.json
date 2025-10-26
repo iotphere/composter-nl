@@ -232,7 +232,7 @@
                         "3": {
                             "method": "cmd",
                             "params": {
-                                "type": "finish",
+                                "type": "complete",
                                 "target": "fsm"
                             },
                             "port": 1
@@ -282,7 +282,7 @@
                 "val": 0
             },
             "power_contactor": {
-                "val": "off"
+                "val": "on"
             },
             "water_valve": {
                 "val": "off"
@@ -320,7 +320,7 @@
                 "speed_set_point": 100
             },
             "fsm": {
-                "val": "finished"
+                "val": "completed"
             }
         }
     }

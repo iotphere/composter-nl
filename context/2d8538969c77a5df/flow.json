@@ -69,13 +69,13 @@
                     "config_node": "203_115200_tcp_rtu_rel_out",
                     "unitid": 14,
                     "channels": {
-                        "loader_forward_valve": {
+                        "walking_floor_forward_valve": {
                             "map": 4
                         },
-                        "loader_reverse_valve": {
+                        "walking_floor_reverse_valve": {
                             "map": 5
                         },
-                        "loader_motor": {
+                        "walking_floor_motor": {
                             "map": 6
                         },
                         "power_contactor": {
@@ -88,10 +88,10 @@
                         "roof_forward_contactor": null,
                         "roof_reverse_contactor": null
                     },
-                    "loader": {
-                        "loader_motor": null,
-                        "loader_forward_valve": null,
-                        "loader_reverse_valve": null
+                    "walking_floor": {
+                        "walking_floor_motor": null,
+                        "walking_floor_forward_valve": null,
+                        "walking_floor_reverse_valve": null
                     }
                 }
             },
@@ -246,7 +246,7 @@
                         }
                     }
                 },
-                "loader_counter": {
+                "walking_floor_counter": {
                     "form": "counter",
                     "direction": "down",
                     "interval": 20,
@@ -256,7 +256,7 @@
                         "4": {
                             "method": "cmd",
                             "params": {
-                                "type": "loader_counter",
+                                "type": "walking_floor_counter",
                                 "target": "fsm"
                             },
                             "port": 1
@@ -282,7 +282,7 @@
                 "val": 0
             },
             "power_contactor": {
-                "val": "on"
+                "val": "off"
             },
             "water_valve": {
                 "val": "off"
@@ -299,16 +299,16 @@
             "roof_reverse_contactor": {
                 "val": "off"
             },
-            "loader": {
+            "walking_floor": {
                 "val": "off"
             },
-            "loader_forward_valve": {
+            "walking_floor_forward_valve": {
                 "val": "off"
             },
-            "loader_reverse_valve": {
+            "walking_floor_reverse_valve": {
                 "val": "off"
             },
-            "loader_motor": {
+            "walking_floor_motor": {
                 "val": "off"
             },
             "fan": {

@@ -45,13 +45,13 @@ if (method === "evt") {
 
   if (type === "oxygen_detector_dig_low" && val === "off") {
     if (currentState === "processing") {
-      sendCmd("on", "loader_counter");
+      sendCmd("on", "walking_floor_counter");
     }
   }
   else if (type === "oxygen_detector_dig_high" && val === "off") {
     if (currentState === "processing") {
-      sendCmd("off", "loader_counter");
-      sendCmd("off", "loader");
+      sendCmd("off", "walking_floor_counter");
+      sendCmd("off", "walking_floor");
       sendCmd("off", "fan_pwm");
     }
   }
@@ -60,24 +60,24 @@ if (method === "evt") {
 
   if (target === "fsm") {
 
-    if (type === "loader_counter") {
+    if (type === "walking_floor_counter") {
       const n = Number(params?.val);
       if (Number.isFinite(n)) {
         if (n > 0) {
-          if (n % 2 === 0) sendCmd("forward", "loader");
-          else sendCmd("reverse", "loader");
+          if (n % 2 === 0) sendCmd("forward", "walking_floor");
+          else sendCmd("reverse", "walking_floor");
         } else {
-          sendCmd("off", "loader");
+          sendCmd("off", "walking_floor");
           sendCmd("on", "fan_pwm");
         }
       }
     }
     else if (type === "process") {
       if (runtime.oxygen_detector_dig_high?.val === "on") {
-        sendCmd("on", "loader_counter");
+        sendCmd("on", "walking_floor_counter");
       } else {
-        sendCmd("off", "loader_counter");
-        sendCmd("off", "loader");
+        sendCmd("off", "walking_floor_counter");
+        sendCmd("off", "walking_floor");
         sendCmd("off", "fan_pwm");
       }
       sendCmd("on", "water_valve_pwm");    

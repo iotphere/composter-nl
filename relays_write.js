@@ -73,13 +73,13 @@ function resetRelays({ preservePower = false, setPower = null } = {}) {
     sendEvtIfChanged(name, "off");
   });
 
-  // loader group off
-  if (config.io.relay_groups?.loader) {
-    Object.keys(config.io.relay_groups.loader).forEach(k => {
+  // walking_floor group off
+  if (config.io.relay_groups?.walking_floor) {
+    Object.keys(config.io.relay_groups.walking_floor).forEach(k => {
       const r = getRelayInfo(k);
       if (r) r.array[r.bit] = false;
     });
-    sendEvtIfChanged("loader", "off");
+    sendEvtIfChanged("walking_floor", "off");
   }
 
   // roof group off
@@ -116,10 +116,10 @@ function writeSingleRelay(name, setOn) {
   node.send([[ createRelayMsgFromArray(info.array, info.unitid, info.arrayName) ], null]);
 }
 
-// ===== Loader Handler =====
-function handleLoaderCmd(cmdType) {
-  if (!config.io.relay_groups?.loader) return;
-  const keys = Object.keys(config.io.relay_groups.loader || {});
+// ===== WalkingFloor Handler =====
+function handleWalkingFloorCmd(cmdType) {
+  if (!config.io.relay_groups?.walking_floor) return;
+  const keys = Object.keys(config.io.relay_groups.walking_floor || {});
   const motorKey = keys[0], fwdKey = keys[1], revKey = keys[2];
   const motor = getRelayInfo(motorKey), fwd = getRelayInfo(fwdKey), rev = getRelayInfo(revKey);
   if (!(motor && fwd && rev)) return;
@@ -133,7 +133,7 @@ function handleLoaderCmd(cmdType) {
   context.set(fwd.arrayName, fwd.array);
   context.set(rev.arrayName, rev.array);
 
-  sendEvtIfChanged("loader", cmdType);
+  sendEvtIfChanged("walking_floor", cmdType);
   sendEvtIfChanged(motorKey, motor.array[motor.bit] ? labels[true] : labels[false]);
   sendEvtIfChanged(fwdKey, fwd.array[fwd.bit] ? labels[true] : labels[false]);
   sendEvtIfChanged(revKey, rev.array[rev.bit] ? labels[true] : labels[false]);
@@ -174,8 +174,8 @@ function handleRoofCmd(cmdType) {
 if ((type === "off" && target === "actuators") || (type === "off" && target === "power") || (type === "on" && target === "power")) {
   const args = (target === "actuators") ? { preservePower: true } : { setPower: (type === "on") };
   resetRelays(args);
-} else if (target === "loader") {
-  handleLoaderCmd(type);
+} else if (target === "walking_floor") {
+  handleWalkingFloorCmd(type);
 } else if (target === "roof") {
   handleRoofCmd(type);
 } else {

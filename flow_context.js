@@ -43,9 +43,9 @@ const flowData = {
         config_node: "203_115200_tcp_rtu_rel_out",
         unitid: 14,
         channels: {
-          loader_forward_valve: {map: 4},
-          loader_reverse_valve: {map: 5},
-          loader_motor: {map: 6},
+          walking_floor_forward_valve: {map: 4},
+          walking_floor_reverse_valve: {map: 5},
+          walking_floor_motor: {map: 6},
           power_contactor: {map: 7}
         }
       },
@@ -54,10 +54,10 @@ const flowData = {
           roof_forward_contactor: null,
           roof_reverse_contactor: null,
         },
-        loader: {
-          loader_motor: null,
-          loader_forward_valve: null,
-          loader_reverse_valve: null    
+        walking_floor: {
+          walking_floor_motor: null,
+          walking_floor_forward_valve: null,
+          walking_floor_reverse_valve: null    
         }
       }
     },
@@ -116,10 +116,10 @@ const flowData = {
           4: {method: "evt", params: {type: "day"}, port: 3} // val buradan sabit gelmeyecek
         }             
       },
-      loader_counter: {
+      walking_floor_counter: {
         form: "counter", direction: "down", interval: 20, base: 10, unit: "s",
         pass: {
-          4: {method: "cmd", params: {type: "loader_counter", target: "fsm"}, port: 1}
+          4: {method: "cmd", params: {type: "walking_floor_counter", target: "fsm"}, port: 1}
         }             
       }
 
@@ -141,10 +141,10 @@ const flowData = {
     roof: {val: "off"},
     roof_forward_contactor: {val: "off"},
     roof_reverse_contactor: {val: "off"},
-    loader: {val: "off"},
-    loader_forward_valve: {val: "off"},
-    loader_reverse_valve: {val: "off"},
-    loader_motor: {val: "off"},
+    walking_floor: {val: "off"},
+    walking_floor_forward_valve: {val: "off"},
+    walking_floor_reverse_valve: {val: "off"},
+    walking_floor_motor: {val: "off"},
     fan: {val: "off", speed_set_point: 100},
     discharger: {val: "off", speed_set_point: 100},
     fsm: {val: "completed"}

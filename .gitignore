@@ -5,8 +5,7 @@
 !.gitignore
 !flows.json
 
-# context klasörünü ve altındaki flow.json’u dahil et
+# context klasörünü dahil et
 !context/
-!context/*/
-!context/*/flow.json
+!context/**
 

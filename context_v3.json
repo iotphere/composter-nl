@@ -1,0 +1,160 @@
+{
+  "kernel": {
+    "config": {
+      "labels": { "true": "on", "false": "off" },
+      "io": {
+        "digital_inputs": {
+          "config_node": "201_115200_tcp_rtu_dig_inp",
+          "unitid": 11,
+          "channels": {
+            "oxygen_detector_dig_low": { "map": 0 },
+            "oxygen_detector_dig_high": { "map": 1 }
+          }
+        },
+        "analog_inputs": {
+          "config_node": "204_9600_tcp_rtu_ang_inp_eng_met",
+          "unitid": 12,
+          "channels": {
+            "temperature": {
+              "map": 5,
+              "change": 1,
+              "factor": 0.01,
+              "scale": { "in_min": 4, "in_max": 20, "out_min": 0, "out_max": 100 }
+            },
+            "oxygen": {
+              "map": 7,
+              "change": 0.2,
+              "factor": 0.01,
+              "scale": { "in_min": 4.81, "in_max": 20, "out_min": 1.63, "out_max": 21.53 }
+            }
+          }
+        },
+        "relay_outputs_1": {
+          "config_node": "203_115200_tcp_rtu_rel_out",
+          "unitid": 13,
+          "channels": {
+            "roof_forward_contactor": { "map": 0 },
+            "roof_reverse_contactor": { "map": 1 },
+            "light": { "map": 6 },
+            "water_valve": { "map": 7 }
+          }
+        },
+        "relay_outputs_2": {
+          "config_node": "203_115200_tcp_rtu_rel_out",
+          "unitid": 14,
+          "channels": {
+            "walking_floor_forward_valve": { "map": 4 },
+            "walking_floor_reverse_valve": { "map": 5 },
+            "walking_floor_motor": { "map": 6 },
+            "power_contactor": { "map": 7 }
+          }
+        },
+        "relay_groups": {
+          "roof": {
+            "roof_forward_contactor": null,
+            "roof_reverse_contactor": null
+          },
+          "walking_floor": {
+            "walking_floor_motor": null,
+            "walking_floor_forward_valve": null,
+            "walking_floor_reverse_valve": null
+          }
+        }
+      },
+      "sinamics": {
+        "config_node": "202_9600_tcp_rtu_sinamics",
+        "channels": {
+          "fan": { "unitid": 12, "speed_set_point": 100 },
+          "discharger": { "unitid": 14, "speed_set_point": 100 }
+        },
+        "command_words": {
+          "forward": 1151,
+          "reverse": 3199,
+          "off": 1150,
+          "fault_ack_res": 1150,
+          "fault_ack_set": 1278
+        },
+        "status_word": {
+          "work": { "map": 2 },
+          "fault": { "map": 3 },
+          "warning": { "map": 7 },
+          "direction": { "map": 14 }
+        },
+        "speed_max": 16384,
+        "fault_ack_retry": 3
+      },
+      "timers": {
+        "fan_pwm": { "form": "pwm", "t_duty": 10, "t_cycle": 180, "unit": "min" },
+        "light_pulse": { "form": "delay", "duration": 2, "unit": "s" },
+        "water_valve_pwm": { "form": "pwm", "t_duty": 15, "t_cycle": 1440, "unit": "min" },
+        "day_counter": {
+          "form": "counter",
+          "direction": "down",
+          "interval": 1,
+          "base": 21,
+          "signal": 3,
+          "unit": "d"
+        },
+        "walking_floor_counter": {
+          "form": "counter",
+          "direction": "down",
+          "interval": 20,
+          "base": 10,
+          "unit": "s"
+        }
+      }
+    },
+    "runtime": {
+      "io": {
+        "digital_inputs": {
+          "channels": {
+            "oxygen_detector_dig_low": { "val": "on" },
+            "oxygen_detector_dig_high": { "val": "on" }
+          }
+        },
+        "analog_inputs": {
+          "channels": {
+            "temperature": { "val": 0 },
+            "oxygen": { "val": 0 }
+          }
+        },
+        "relay_outputs_1": {
+          "channels": {
+            "roof_forward_contactor": { "val": "off" },
+            "roof_reverse_contactor": { "val": "off" },
+            "light": { "val": "off" },
+            "water_valve": { "val": "off" }
+          }
+        },
+        "relay_outputs_2": {
+          "channels": {
+            "walking_floor_forward_valve": { "val": "off" },
+            "walking_floor_reverse_valve": { "val": "off" },
+            "walking_floor_motor": { "val": "off" },
+            "power_contactor": { "val": "off" }
+          }
+        },
+        "relay_groups": {
+          "roof": { "val": "off" },
+          "walking_floor": { "val": "off" }
+        }
+      },
+      "sinamics": {
+        "channels": {
+          "fan": { "val": { "work": "off", "fault": "off", "warning": "off", "direction": "on" } },
+          "discharger": { "val": { "work": "off", "fault": "off", "warning": "off", "direction": "on" } }
+        }
+      },
+      "timers": {
+        "fan_pwm": { "state": "off", "phase_until": null },
+        "light_pulse": { "state": "off", "phase_until": null },
+        "water_valve_pwm": { "state": "off", "phase_until": null },
+        "day_counter": { "state": "off", "count": 0, "next_time": null },
+        "walking_floor_counter": { "state": "off", "count": 0, "next_time": null }
+      },
+      "fsm": { "val": "completed" }
+    },
+    "helpers": {
+    }
+  }
+}

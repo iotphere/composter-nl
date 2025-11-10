@@ -1,0 +1,731 @@
+[
+    {
+        "id": "plc_tab",
+        "type": "tab",
+        "label": "plc_tab",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "relays_writer",
+        "type": "modbus-flex-write",
+        "z": "plc_tab",
+        "name": "relays_writer",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "server": "c3488bd8821ff6d8",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "10",
+        "x": 1210,
+        "y": 240,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "digital_inputs_getter",
+        "type": "modbus-flex-getter",
+        "z": "plc_tab",
+        "name": "digital_inputs_getter",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "server": "2206e55e928c8b8f",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": true,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 380,
+        "y": 120,
+        "wires": [
+            [
+                "plc_function"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "digital_inputs_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "digital_inputs_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "0.1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "2",
+        "topic": "digital_inputs",
+        "payload": "{\"fc\": 3, \"unitid\": 11, \"address\": 144 , \"quantity\": 1}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "digital_inputs_getter"
+            ]
+        ]
+    },
+    {
+        "id": "analog_inputs_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "analog_inputs_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "5",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "10",
+        "topic": "analog_inputs",
+        "payload": "{\"fc\": 3, \"unitid\": 12, \"address\": 160 , \"quantity\": 8}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 180,
+        "wires": [
+            [
+                "analog_and_energy_getter"
+            ]
+        ]
+    },
+    {
+        "id": "energy_meter_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "energy_meter_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "30",
+        "topic": "energy_meter",
+        "payload": "{\"fc\": 3, \"unitid\": 2, \"address\": 29 , \"quantity\": 2}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 240,
+        "wires": [
+            [
+                "analog_and_energy_getter"
+            ]
+        ]
+    },
+    {
+        "id": "sinamics_writer",
+        "type": "modbus-flex-write",
+        "z": "plc_tab",
+        "name": "sinamics_writer",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "server": "9703a3f2808e2fa6",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 1220,
+        "y": 180,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "mqtt_in",
+        "type": "mqtt in",
+        "z": "plc_tab",
+        "name": "mqtt_in",
+        "topic": "v1/devices/me/rpc/request/+",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e1d018cea69d77b6",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 330,
+        "y": 60,
+        "wires": [
+            [
+                "plc_function"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out",
+        "type": "mqtt out",
+        "z": "plc_tab",
+        "name": "mqtt_out",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e1d018cea69d77b6",
+        "x": 1200,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "timer_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "timer_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "timer",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 480,
+        "wires": [
+            [
+                "plc_function"
+            ]
+        ]
+    },
+    {
+        "id": "analog_and_energy_getter",
+        "type": "modbus-flex-getter",
+        "z": "plc_tab",
+        "name": "analog_and_energy_getter",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "server": "e707d8a8f03b29cf",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": true,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 400,
+        "y": 180,
+        "wires": [
+            [
+                "plc_function"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "power_on_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "power_on_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "power_on",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 420,
+        "wires": [
+            [
+                "plc_function"
+            ]
+        ]
+    },
+    {
+        "id": "sinamics_12_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "sinamics_12_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "unitid",
+                "v": "12",
+                "vt": "num"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "20",
+        "topic": "sinamics",
+        "payload": "{\"fc\": 3, \"unitid\": 12, \"address\": 109 , \"quantity\": 1}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 300,
+        "wires": [
+            [
+                "sinamics_getter"
+            ]
+        ]
+    },
+    {
+        "id": "sinamics_getter",
+        "type": "modbus-flex-getter",
+        "z": "plc_tab",
+        "name": "sinamics_getter",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "server": "9703a3f2808e2fa6",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": true,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 360,
+        "y": 300,
+        "wires": [
+            [
+                "plc_function"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "plc_function",
+        "type": "function",
+        "z": "plc_tab",
+        "name": "plc_function",
+        "func": "return null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 60,
+        "wires": [
+            [
+                "telemetry_switch",
+                "rpc_switch",
+                "relays_switch",
+                "power_on_delay_switch",
+                "info_debug",
+                "sinamics_switch"
+            ]
+        ]
+    },
+    {
+        "id": "sinamics_14_inject",
+        "type": "inject",
+        "z": "plc_tab",
+        "name": "sinamics_14_inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "unitid",
+                "v": "14",
+                "vt": "num"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "20",
+        "topic": "sinamics",
+        "payload": "{\"fc\": 3, \"unitid\": 14, \"address\": 109 , \"quantity\": 1}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 360,
+        "wires": [
+            [
+                "sinamics_getter"
+            ]
+        ]
+    },
+    {
+        "id": "telemetry_switch",
+        "type": "switch",
+        "z": "plc_tab",
+        "name": "telemetry_switch",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "v1/devices/me/telemetry",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 990,
+        "y": 60,
+        "wires": [
+            [
+                "mqtt_out"
+            ]
+        ]
+    },
+    {
+        "id": "rpc_switch",
+        "type": "switch",
+        "z": "plc_tab",
+        "name": "rpc_switch",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "v1/devices/me/rpc/response/",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 970,
+        "y": 120,
+        "wires": [
+            [
+                "mqtt_out"
+            ]
+        ]
+    },
+    {
+        "id": "sinamics_switch",
+        "type": "switch",
+        "z": "plc_tab",
+        "name": "sinamics_switch",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "sinamics",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 980,
+        "y": 180,
+        "wires": [
+            [
+                "sinamics_writer"
+            ]
+        ]
+    },
+    {
+        "id": "relays_switch",
+        "type": "switch",
+        "z": "plc_tab",
+        "name": "relays_switch",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "relays",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 980,
+        "y": 240,
+        "wires": [
+            [
+                "relays_writer"
+            ]
+        ]
+    },
+    {
+        "id": "power_on_delay_switch",
+        "type": "switch",
+        "z": "plc_tab",
+        "name": "power_on_delay_switch",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "power_on_delay",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1010,
+        "y": 300,
+        "wires": [
+            [
+                "power_on_delay"
+            ]
+        ]
+    },
+    {
+        "id": "power_on_delay",
+        "type": "delay",
+        "z": "plc_tab",
+        "name": "power_on_delay",
+        "pauseType": "delay",
+        "timeout": "15",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1220,
+        "y": 300,
+        "wires": [
+            [
+                "plc_function"
+            ]
+        ]
+    },
+    {
+        "id": "info_debug",
+        "type": "debug",
+        "z": "plc_tab",
+        "name": "info_debug",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "c3488bd8821ff6d8",
+        "type": "modbus-client",
+        "name": "203_115200_tcp_rtu_rel_out",
+        "clienttype": "tcp",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": false,
+        "tcpHost": "192.168.1.203",
+        "tcpPort": "4196",
+        "tcpType": "TCP-RTU-BUFFERED",
+        "serialPort": "/dev/ttyUSB",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialStopbits": 1,
+        "serialParity": "none",
+        "serialConnectionDelay": 100,
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": "",
+        "commandDelay": 100,
+        "clientTimeout": 1000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "2206e55e928c8b8f",
+        "type": "modbus-client",
+        "name": "201_115200_tcp_rtu_dig_inp",
+        "clienttype": "tcp",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": false,
+        "tcpHost": "192.168.1.201",
+        "tcpPort": "4196",
+        "tcpType": "TCP-RTU-BUFFERED",
+        "serialPort": "/dev/ttyUSB",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialStopbits": 1,
+        "serialParity": "none",
+        "serialConnectionDelay": 100,
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": "",
+        "commandDelay": 1,
+        "clientTimeout": 1000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "9703a3f2808e2fa6",
+        "type": "modbus-client",
+        "name": "202_9600_tcp_rtu_sinamics",
+        "clienttype": "tcp",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": false,
+        "tcpHost": "192.168.1.202",
+        "tcpPort": "4196",
+        "tcpType": "TCP-RTU-BUFFERED",
+        "serialPort": "/dev/ttyUSB",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialStopbits": 1,
+        "serialParity": "none",
+        "serialConnectionDelay": 100,
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": "",
+        "commandDelay": 100,
+        "clientTimeout": 1000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "e1d018cea69d77b6",
+        "type": "mqtt-broker",
+        "name": "mqtt_broker",
+        "broker": "46.224.43.158/",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "e707d8a8f03b29cf",
+        "type": "modbus-client",
+        "name": "204_9600_tcp_rtu_ang_inp_eng_met",
+        "clienttype": "tcp",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": false,
+        "failureLogEnabled": false,
+        "tcpHost": "192.168.1.204",
+        "tcpPort": "4196",
+        "tcpType": "TCP-RTU-BUFFERED",
+        "serialPort": "/dev/ttyUSB",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialStopbits": 1,
+        "serialParity": "none",
+        "serialConnectionDelay": 100,
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": "",
+        "commandDelay": 100,
+        "clientTimeout": 1000,
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": 2000,
+        "parallelUnitIdsAllowed": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "0d82425141589f62",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-modbus": "5.43.0"
+        }
+    }
+]

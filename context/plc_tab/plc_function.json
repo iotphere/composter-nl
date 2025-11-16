@@ -63,8 +63,8 @@
       "sinamics": {
         "config_node": "202_9600_tcp_rtu_sinamics",
         "channels": {
-          "fan": { "unitid": 12, "speed_set_point": 100 },
-          "discharger": { "unitid": 14, "speed_set_point": 100 }
+          "fan": { "unitid": 12, "speed_set_point": 50 },
+          "discharger": { "unitid": 14, "speed_set_point": 50 }
         },
         "command_words": {
           "forward": 1151,

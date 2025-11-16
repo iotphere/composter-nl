@@ -1,15 +1,15 @@
 /************************************************************
- * PLC (Single Function Node) — V30
- * - v223 tabanlı
- * - Fault Recovery: sinamics status fault:"on" gelince
- *   * helpers.sinamics.channels.<ch>.fault_retry sayacı (config.sinamics.fault_ack_retry, yoksa 3)
- *   * ack-set (fault_ack_set) + önceki sağlıklı duruma (work/direction) göre komut (forward/reverse/off)
- *   * fault:"off" görülünce lastHealthy güncellenir ve sayaç resetlenir
- * - speed_set_point CONFIG altında; set.* ile yazılır, telemetry YOK (yalnız Modbus speed write)
- * - runtime.sinamics.channels.<ch>.val = {work,fault,warning,direction}
- *   * yalnız status değişince güncellenir ve telemetry çıkar
- * - fsm: { val: "..." } olarak tutulur
- * - plc_switch yok; loop() iç çağrı
+ * PLC (Single Function Node) — V44
+ * - Day timer start echo sorunu çözülü (V42’den devralınmış).
+ * - Walking floor (tick + pozisyon takibi, center'da bitirme) başarılı (V42/V43’ten devralınmış).
+ * - ANALOG INPUTS:
+ *   * change "static" olarak son stabil değere göre çalışıyor.
+ *   * Yeterli değişim için 2 ardışık örnekte deadband dışı olma şartı var.
+ *   * pro detector’lar sadece bu filtreyi geçen stabil değeri kullanıyor.
+ * - SINAMICS AUTO-RECOVER:
+ *   * Ortak retry limiti: config.sinamics.fault_ack_retry (default 3).
+ *   * Ortak enable flag: config.sinamics.fault_ack_enable (default true).
+ *   * fault_ack_enable === false iken otomatik recover çalışmaz, sadece status telemetry güncellenir.
  ************************************************************/
 
 // ---------- micro utils ----------
@@ -23,18 +23,7 @@ const hp  = K.helpers;
 const out = []; // single port: we push all messages here
 const LABELS = (cfg.labels || { true: "on", false: "off" });
 
-function now(){ return Date.now(); }
 function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
-
-function toMs(val, unit) {
-  const u = (unit || "s").toLowerCase();
-  if (u === "ms")  return val;
-  if (u === "s")   return val * 1000;
-  if (u === "min") return val * 60000;
-  if (u === "h")   return val * 3600000;
-  if (u === "d")   return val * 86400000;
-  return val * 1000;
-}
 
 function ensure(o, pathArr) {
   let cur = o;
@@ -47,15 +36,11 @@ function ensure(o, pathArr) {
 
 // ---------- telemetry & rpc ----------
 function tel(obj, nested=false) {
-  // telemetry payload’larını runtime benzeri {key:{val:...}} formunda üret
   if (!obj || !Object.keys(obj).length) return;
   const formatted = {};
   for (const [k,v] of Object.entries(obj)) {
-    if (v && typeof v === "object" && ("val" in v)) {
-      formatted[k] = v;            // zaten {val:...}
-    } else {
-      formatted[k] = { val: v };   // string/number -> {val:...}
-    }
+    if (v && typeof v === "object" && ("val" in v)) formatted[k] = v;
+    else formatted[k] = { val: v };
   }
   const payload = nested ? { data: formatted } : formatted;
   out.push({ topic:"v1/devices/me/telemetry", payload });
@@ -66,7 +51,7 @@ function rpcResp(id, content) {
 }
 
 // ==========================================================
-// [no self-loop] loop(): iç yönlendirme
+// [no self-loop] loop()
 // ==========================================================
 function loop(evt) {
   if (!evt || !evt.type) return;
@@ -183,7 +168,6 @@ function sin_write(unitid,address,value){
   out.push({ topic:"sinamics", payload:{ value,fc:6,unitid,address,quantity:1 }});
 }
 function sin_cmd(target,type){
-  // NOTE: hız artık cmd ile yönetilmiyor; yalnız set.* ile (aşağıdaki set hook)
   const ch=cfg.sinamics?.channels?.[target];
   if(!ch) return;
   const {wordAddr}=sin_address();
@@ -192,12 +176,10 @@ function sin_cmd(target,type){
     const w=cmdWords[type];
     if(w!=null){
       sin_write(ch.unitid,wordAddr,w);
-      // runtime güncellenmez; status getter değişince runtime & telemetry üretilecek
     }
   }
 }
 function sin_all_off_and_speed(){
-  // OFF -> SPEED sırası (senin v223 düzenin korunuyor)
   const {wordAddr,speedAddr}=sin_address();
   const cmdWords=cfg.sinamics?.command_words||{};
   for(const [name,ch] of Object.entries(cfg.sinamics?.channels||{})){
@@ -229,23 +211,23 @@ function deepEqual(a,b){
   return true;
 }
 
-// ---- Fault Recovery helpers ----
-const DEFAULT_FAULT_RETRY = Number.isFinite(cfg.sinamics?.fault_ack_retry) ? cfg.sinamics.fault_ack_retry : 3;
+const DEFAULT_FAULT_RETRY   = Number.isFinite(cfg.sinamics?.fault_ack_retry) ? cfg.sinamics.fault_ack_retry : 3;
+const FAULT_ACK_ENABLED     = (cfg.sinamics?.fault_ack_enable !== false); // default:true
+
 function desiredCmdFromStatus(stat){
-  // stat: {work:"on/off", direction:"on/off"} -> "forward" | "reverse" | "off"
   if (!stat || stat.work !== "on") return "off";
-  // direction bit: "on" -> forward, "off" -> reverse (basit ve belirgin sözleşme)
   return (stat.direction === "on") ? "forward" : "reverse";
 }
 
 function sin_evt_from_status(msg){
-  // Modbus status word çözümle -> {work,fault,warning,direction} ve sadece değişimde runtime&telemetry
   const rawVal=Array.isArray(msg.payload)?msg.payload[0]:msg.payload;
   const unitid=msg.unitid??msg?.payload?.unitid??msg?.modbusRequest?.unitid;
   if(typeof rawVal!=="number"||unitid==null) return;
 
   let target=null;
-  for(const [name,ch] of Object.entries(cfg.sinamics?.channels||{})){ if(ch.unitid===unitid){ target=name; break; } }
+  for(const [name,ch] of Object.entries(cfg.sinamics?.channels||{})){
+    if(ch.unitid===unitid){ target=name; break; }
+  }
   if(!target) return;
 
   const getBit=(v,i)=>( (v&(1<<i))!==0 );
@@ -253,14 +235,12 @@ function sin_evt_from_status(msg){
   const statusObj={};
   for(const [k,def] of Object.entries(map)) statusObj[k]=LABELS[getBit(rawVal,def.map)];
 
-  // helpers channel bucket
   const hch = ensure(hp, ["sinamics","channels",target]);
   if (typeof hch.fault_retry !== "number") hch.fault_retry = DEFAULT_FAULT_RETRY;
-  // runtime önceki değer (karşılaştırma ve lastHealthy güncellemesi için)
+
   const rroot=ensure(rt,["sinamics","channels"]);
   const prev = rroot[target]?.val || null;
 
-  // Runtime değişim varsa güncelle + telemetry
   const changed = !prev || !deepEqual(prev, statusObj);
   if (changed){
     ensure(rroot,[target]);
@@ -268,36 +248,35 @@ function sin_evt_from_status(msg){
     tel({ [target]: { val: statusObj } });
   }
 
-  // ----- Fault handling -----
+  // Fault ON → opsiyonel auto-recover
   if (statusObj.fault === "on") {
-    // Fault ON: recovery denemesi
+    // Auto-recover disable ise: sadece retry sayaç resetle ve çık
+    if (!FAULT_ACK_ENABLED) {
+      hch.fault_retry = DEFAULT_FAULT_RETRY;
+      return;
+    }
+
     const { wordAddr } = sin_address();
     const cmdWords = cfg.sinamics?.command_words || {};
     const ch = cfg.sinamics?.channels?.[target];
     if (!ch) return;
 
-    // Son sağlıklı (fault:"off") durumumuz yoksa, prev içinde fault off olan son hal olabilir;
-    // garantiye almak için helpers.lastHealthy yoksa "off" kabul et.
     const lastHealthy = hch.lastHealthy && hch.lastHealthy.fault === "off"
       ? hch.lastHealthy
       : (prev && prev.fault === "off" ? prev : { work:"off", fault:"off", warning:"off", direction:"on" });
 
-    // Retry varsa ack-set + lastHealthy komutu gönder
     if (hch.fault_retry > 0) {
-      // 1) fault ack set
       if (cmdWords.fault_ack_set != null) {
         sin_write(ch.unitid, wordAddr, cmdWords.fault_ack_set);
       }
-      // 2) eski durumu yansıt (forward/reverse/off)
       const cmdType = desiredCmdFromStatus(lastHealthy);
       if (["forward","reverse","off"].includes(cmdType) && cmdWords[cmdType] != null) {
         sin_write(ch.unitid, wordAddr, cmdWords[cmdType]);
       }
       hch.fault_retry -= 1;
     }
-    // Retry yoksa artık bir şey yapmıyoruz; sonraki fault off’da resetlenecek.
   } else {
-    // Fault OFF: bu durumu "sağlıklı" olarak işaretle ve retry resetle
+    // Fault OFF → bu durumu "sağlıklı" say ve retry resetle
     hch.lastHealthy = statusObj;
     hch.fault_retry = DEFAULT_FAULT_RETRY;
   }
@@ -335,14 +314,14 @@ function handle_digital_inputs(msg){
       if(prev!==hist[1]){
         rroot[key]={val:hist[1]};
         tel({[key]:hist[1]});
-        loop({type:"evt.din", key, val:hist[1]}); // iç çağrı
+        loop({type:"evt.din", key, val:hist[1]});
       }
     }
   }
 }
 
 // ==========================================================
-// ANALOG INPUTS + analog_pro thresholds
+// ANALOG INPUTS  (static change + 2-sample debounce + pro)
 // ==========================================================
 function handle_analog_inputs(msg){
   const arr=msg.payload; if(!Array.isArray(arr)) return;
@@ -353,6 +332,7 @@ function handle_analog_inputs(msg){
   for(const [key,def] of Object.entries(channels)){
     const i=def.map; if(!Number.isFinite(arr[i])) continue;
     let v=arr[i];
+
     if(Number.isFinite(def.factor)) v*=def.factor;
     if(def.scale){
       const {in_min,in_max,out_min,out_max}=def.scale;
@@ -360,35 +340,114 @@ function handle_analog_inputs(msg){
     }
     v=Number.parseFloat(v.toFixed(3));
 
-    if(!hroot[key]) hroot[key]={lastVal:null};
-    const last=hroot[key].lastVal;
-    const chg=def.change??0;
+    let hch = hroot[key];
+    if (!hch) {
+      hch = {};
+      hroot[key] = hch;
+    }
 
-    if(last===null||Math.abs(v-last)>=chg){
-      hroot[key].lastVal=v;
-      rroot[key]={val:v};
-      tel({[key]:v});
+    if (hch.lastStable == null && typeof hch.lastVal === "number") {
+      hch.lastStable = hch.lastVal;
+    }
 
-      // analog_pro türetilmiş dijitaller (varsa)
-      if(def.pro){
-        for(const [det,th] of Object.entries(def.pro)){
-          if(!th || !Number.isFinite(th.low) || !Number.isFinite(th.high)) continue;
+    const chg = def.change ?? 0;
+
+    // change <= 0 → her değişikliği al
+    if (!(chg > 0)) {
+      const prev = rroot[key]?.val;
+      if (prev !== v) {
+        rroot[key] = { val: v };
+        tel({ [key]: v });
+        if (def.pro) {
+          for (const [det,th] of Object.entries(def.pro)) {
+            if (!th || !Number.isFinite(th.low) || !Number.isFinite(th.high)) continue;
+            const lowKey  = det + "_low";
+            const highKey = det + "_high";
+            const prevL = rroot[lowKey]?.val ?? "on";
+            const prevH = rroot[highKey]?.val ?? "on";
+            const newL = (v < th.low)  ? "off" : "on";
+            const newH = (v > th.high) ? "off" : "on";
+            if (newL !== prevL) {
+              rroot[lowKey] = { val: newL };
+              tel({ [lowKey]: newL });
+              loop({ type:"evt.din", key:lowKey, val:newL });
+            }
+            if (newH !== prevH) {
+              rroot[highKey] = { val: newH };
+              tel({ [highKey]: newH });
+              loop({ type:"evt.din", key:highKey, val:newH });
+            }
+          }
+        }
+      }
+      continue;
+    }
+
+    // change > 0: STATIC deadband + 2-sample debounce
+    let stable = (typeof hch.lastStable === "number")
+      ? hch.lastStable
+      : (typeof rroot[key]?.val === "number" ? rroot[key].val : null);
+
+    if (stable == null) {
+      // İlk stabil değer
+      hch.lastStable = v;
+      rroot[key] = { val: v };
+      tel({ [key]: v });
+
+      if (def.pro) {
+        for (const [det,th] of Object.entries(def.pro)) {
+          if (!th || !Number.isFinite(th.low) || !Number.isFinite(th.high)) continue;
           const lowKey  = det + "_low";
           const highKey = det + "_high";
-          const prevL=rroot[lowKey]?.val??"on";
-          const prevH=rroot[highKey]?.val??"on";
-          const newL=(v<th.low) ?"off":"on";
-          const newH=(v>th.high)?"off":"on";
-          if(newL!==prevL){
-            rroot[lowKey]={val:newL};
-            tel({[lowKey]:newL});
-            loop({type:"evt.din", key:lowKey,  val:newL});
-          }
-          if(newH!==prevH){
-            rroot[highKey]={val:newH};
-            tel({[highKey]:newH});
-            loop({type:"evt.din", key:highKey, val:newH});
-          }
+          const newL = (v < th.low)  ? "off" : "on";
+          const newH = (v > th.high) ? "off" : "on";
+          rroot[lowKey] = { val: newL };
+          rroot[highKey] = { val: newH };
+          tel({ [lowKey]: newL, [highKey]: newH });
+        }
+      }
+      continue;
+    }
+
+    const diff = v - stable;
+
+    if (Math.abs(diff) < chg) {
+      hch.pending   = null;
+      hch.pendingOk = false;
+      continue;
+    }
+
+    if (!hch.pendingOk) {
+      hch.pending   = v;
+      hch.pendingOk = true;
+      continue;
+    }
+
+    hch.lastStable = v;
+    hch.pending    = null;
+    hch.pendingOk  = false;
+
+    rroot[key] = { val: v };
+    tel({ [key]: v });
+
+    if (def.pro) {
+      for (const [det,th] of Object.entries(def.pro)) {
+        if (!th || !Number.isFinite(th.low) || !Number.isFinite(th.high)) continue;
+        const lowKey  = det + "_low";
+        const highKey = det + "_high";
+        const prevL = rroot[lowKey]?.val ?? "on";
+        const prevH = rroot[highKey]?.val ?? "on";
+        const newL = (v < th.low)  ? "off" : "on";
+        const newH = (v > th.high) ? "off" : "on";
+        if (newL !== prevL) {
+          rroot[lowKey] = { val: newL };
+          tel({ [lowKey]: newL });
+          loop({ type:"evt.din", key:lowKey, val:newL });
+        }
+        if (newH !== prevH) {
+          rroot[highKey] = { val: newH };
+          tel({ [highKey]: newH });
+          loop({ type:"evt.din", key:highKey, val:newH });
         }
       }
     }
@@ -412,122 +471,163 @@ function handle_energy_meter(msg){
 }
 
 // ==========================================================
-// TIMERS
+// DAY TIMER (HARİCİ TRIGGER — FIXED)
 // ==========================================================
-function t_rt(name){ const root=ensure(rt,["timers"]); if(!root[name]) root[name]={state:"off"}; return root[name]; }
+// hp.day_timer_just_started = true → day_timer_start içinde set edilir
 
-function timer_on(name, forcedCount=null) {
-  const t = cfg.timers?.[name]; if (!t) return;
-  const r = t_rt(name);
-  r.state = "on";
-  r.on_time = now();
-  r.phase = null; r.phase_until = null; r.next_time = null;
+function day_timer_start() {
+  const tcfg = cfg.timers?.day_timer || {};
+  const base = Number.isFinite(tcfg.base) ? tcfg.base : 0;
 
-  if (t.form === "delay") {
-    r.done = false;
-    r.phase_until = now() + toMs(t.duration, t.unit);
-    timer_apply_phase(name, "a");
-  }
-  else if (t.form === "pwm") {
-    r.phase = "a";
-    r.phase_until = now() + toMs(t.t_duty, t.unit);
-    timer_apply_phase(name, "a");
-  }
-  else if (t.form === "counter") {
-    r.count = (forcedCount != null) ? forcedCount : t.base;
-    r.next_time = now() + toMs(t.interval, t.unit);
-    tel({ [name]: r.count });
-    if (name === "day_counter") tel({ day: r.count });
-  }
+  const rtTimers = ensure(rt, ["timers"]);
+  rtTimers.day = base;
+
+  tel({ day: base });
+
+  hp.day_timer_just_started = true;
+
+  out.push({ topic: "day_timer", payload: "day_timer" });
 }
 
-function timer_off(name) {
-  const t = cfg.timers?.[name]; if (!t) return;
-  const r = t_rt(name);
-  r.state = "off";
+function day_timer_stop() {
+  const rtTimers = ensure(rt, ["timers"]);
+  rtTimers.day = 0;
+  tel({ day: 0 });
 
-  if (t.form === "delay") {
-    r.done = true;
-    timer_apply_phase(name, "b");
-  }
-  else if (t.form === "pwm") {
-    r.phase = null;
-    timer_apply_phase(name, "b");
-  }
-  else if (t.form === "counter") {
-    r.count = 0;
-    tel({ [name]: 0 });
-    if (name === "day_counter") tel({ day: 0 });
-  }
+  hp.day_timer_just_started = false;
 
-  r.on_time = r.next_time = r.phase_until = null;
-  r.phase = null;
+  out.push({ topic: "day_timer", reset: true, payload: "day_timer" });
 }
 
-function timers_tick() {
-  const nowt = now();
-  for (const [name, t] of Object.entries(cfg.timers || {})) {
-    const r = t_rt(name);
-    if (r.state !== "on") continue;
+function day_timer_tick() {
+  const f = fsm_state();
+  if (f.val !== "processing") return;
 
-    if (t.form === "delay") {
-      if (!r.done && nowt >= r.phase_until) {
-        r.done = true;
-        timer_apply_phase(name, "b");
-      }
-    }
-    else if (t.form === "pwm") {
-      if (nowt >= r.phase_until) {
-        if (r.phase === "a") {
-          r.phase = "b";
-          r.phase_until = nowt + toMs(t.t_cycle - t.t_duty, t.unit);
-          timer_apply_phase(name, "b");
-        } else {
-          r.phase = "a";
-          r.phase_until = nowt + toMs(t.t_duty, t.unit);
-          timer_apply_phase(name, "a");
-        }
-      }
-    }
-    else if (t.form === "counter") {
-      if (nowt >= r.next_time && r.count > 0) {
-        r.count -= 1;
-        r.next_time = nowt + toMs(t.interval, t.unit);
-        tel({ [name]: r.count });
+  if (hp.day_timer_just_started) {
+    hp.day_timer_just_started = false;
+    return;
+  }
 
-        if (name === "day_counter") {
-          const sig = cfg.timers.day_counter.signal;
-          if (sig != null && r.count === sig) fsm_cmd({ type: "dry" });
-          if (r.count === 0) fsm_cmd({ type: "complete" });
-          tel({ day: r.count });
-        }
-        else if (name === "walking_floor_counter") {
-          fsm_cmd({ type: "walking_floor_counter", val: r.count });
-          if (r.count === 0) timer_off("walking_floor_counter");
-        }
-      }
-    }
-  }
-}
+  const rtTimers = ensure(rt, ["timers"]);
+  let day = Number(rtTimers.day) || 0;
+  if (day <= 0) return;
 
-function timer_apply_phase(name, phase) {
-  if (name === "fan_pwm") {
-    if (phase === "a") sin_cmd("fan", "forward");
-    else               sin_cmd("fan", "off");
-  }
-  else if (name === "water_valve_pwm") {
-    if (phase === "a") relay_set("water_valve", true);
-    else               relay_set("water_valve", false);
-    relays_packAndSend();
-  }
-  else if (name === "light_pulse") {
-    if (phase === "a") { relay_set("light", true); relays_packAndSend(); }
-    else               { relay_set("light", false); relays_packAndSend(); }
+  day -= 1;
+  rtTimers.day = day;
+  tel({ day });
+
+  if (day <= 0) {
+    fsm_cmd({ type: "complete", reason: "day0" });
   }
 }
 
 // ==========================================================
-// FSM  (fsm:{val:"..."})
+// WALKING FLOOR LOOP (HARİCİ TRIGGER) — V41/V43 mantığı
+// ==========================================================
+// Tick + pozisyon takipli model:
+//   phase 0: center
+//   phase 1: forward_end
+//   phase 2: center
+//   phase 3: reverse_end
+// Tick dizisi: 0 → 1 → 2 → 3 → 0 → ...
+// Exit: exit_pending true iken phase ∈ {0,2} olduğunda center'da OFF + trigger reset
+
+function wf_state() {
+  return ensure(hp, ["walking_floor"]);
+}
+
+function wf_is_active() {
+  const h = wf_state();
+  return !!h.active;
+}
+
+function wf_loop_start() {
+  const h = wf_state();
+  if (h.active) return;
+
+  h.active = true;
+  h.exit_pending = false;
+
+  // İlk hareket forward, ilk tick echo'su ignore edilecek
+  h.phase = 0;
+  h.just_started = true;
+
+  walking_floor_cmd("forward");
+  sin_cmd("fan", "forward");
+
+  const tcfg = cfg.timers?.walking_floor_loop_timer || {};
+  const intervalSec = Number(tcfg.interval) || 10;
+  const delayMs = Math.max(1, Math.round((intervalSec * 1000) / 2));
+
+  out.push({
+    topic: "wf_loop_timer",
+    delay: delayMs,
+    payload: "wf_loop_timer"
+  });
+}
+
+function wf_loop_request_stop() {
+  const h = wf_state();
+  if (!h.active) return;
+  h.exit_pending = true;
+}
+
+function wf_loop_force_stop() {
+  const h = wf_state();
+  if (!h.active) return;
+
+  walking_floor_cmd("off");
+  sin_cmd("fan", "off");
+  h.active = false;
+  h.exit_pending = false;
+  h.phase = 0;
+  h.just_started = false;
+
+  out.push({ topic: "wf_loop_timer", reset: true, payload: "wf_loop_timer" });
+}
+
+function wf_loop_tick() {
+  const h = wf_state();
+  if (!h.active) return;
+
+  // İlk tick (trigger echo) → ignore
+  if (h.just_started) {
+    h.just_started = false;
+    return;
+  }
+
+  if (typeof h.phase !== "number") h.phase = 0;
+  h.phase = (h.phase + 1) & 3; // 0..3
+
+  // Exit isteği varsa ve center'daysak (0 veya 2)
+  if (h.exit_pending && (h.phase === 0 || h.phase === 2)) {
+    walking_floor_cmd("off");
+    sin_cmd("fan", "off");
+    h.active = false;
+    h.exit_pending = false;
+
+    out.push({ topic: "wf_loop_timer", reset: true, payload: "wf_loop_timer" });
+
+    if (hp.shutdown_pending) {
+      relays_reset({ preservePower: true });
+      sin_all_off_and_speed();
+      hp.shutdown_pending = false;
+    }
+    return;
+  }
+
+  // Normal döngü yön seçimi:
+  // phase 0 veya 3 → forward
+  // phase 1 veya 2 → reverse
+  if (h.phase === 0 || h.phase === 3) {
+    walking_floor_cmd("forward");
+  } else {
+    walking_floor_cmd("reverse");
+  }
+}
+
+// ==========================================================
+// FSM
 // ==========================================================
 function fsm_state(){ if(!rt.fsm) rt.fsm = { val:"completed" }; return rt.fsm; }
 function fsm_transition(to){
@@ -537,14 +637,35 @@ function fsm_transition(to){
 
 function fsm_event_from_digital(key, val) {
   const st = fsm_state().val;
-  if (key === "oxygen_detector_dig_low" && val === "off") {
-    if (st === "processing") { timer_on("walking_floor_counter"); }
-  } else if (key === "oxygen_detector_dig_high" && val === "off") {
-    if (st === "processing") {
-      timer_off("walking_floor_counter");
-      walking_floor_cmd("off");
-      timer_off("fan_pwm");
-    }
+  const lowKey  = "oxygen_detector_dig_low";
+  const highKey = "oxygen_detector_dig_high";
+
+  if (st !== "processing") return;
+
+  if (key === lowKey && val === "off") {
+    sin_cmd("fan", "forward");
+    wf_loop_start();
+  }
+
+  if (key === highKey && val === "off") {
+    sin_cmd("fan", "off");
+    wf_loop_request_stop();
+  }
+}
+
+function fsm_complete_common() {
+  const st = fsm_state().val;
+  fsm_transition("completed");
+
+  day_timer_stop();
+
+  if (wf_is_active()) {
+    hp.shutdown_pending = true;
+    wf_loop_request_stop();
+  } else {
+    relays_reset({ preservePower: true });
+    sin_all_off_and_speed();
+    hp.shutdown_pending = false;
   }
 }
 
@@ -553,41 +674,27 @@ function fsm_cmd(cmd) {
   if (!type) return;
 
   if (type === "process") {
-    const digHigh = rt.io?.digital_inputs?.channels?.oxygen_detector_dig_high?.val || "on";
-    if (digHigh === "on") timer_on("walking_floor_counter");
-    else {
-      timer_off("walking_floor_counter");
-      walking_floor_cmd("off");
-      timer_off("fan_pwm");
-    }
-    timer_on("water_valve_pwm");
-    timer_on("day_counter");
+
+    day_timer_stop();
+    wf_loop_force_stop();
+    hp.shutdown_pending = false;
+    hp.walking_floor = {};
+
     fsm_transition("processing");
-  }
-  else if (type === "dry") {
-    timer_on("fan_pwm");
-    timer_off("water_valve_pwm");
-    const sig = cfg.timers?.day_counter?.signal ?? null;
-    timer_on("day_counter", sig);
-    fsm_transition("drying");
+
+    day_timer_start();
+
+    const digHigh = rt.io?.digital_inputs?.channels?.oxygen_detector_dig_high?.val || "on";
+
+    if (digHigh === "on") {
+      sin_cmd("fan", "forward");
+      wf_loop_start();
+    } else {
+      sin_cmd("fan", "off");
+    }
   }
   else if (type === "complete") {
-    for (const name of Object.keys(cfg.timers || {})) timer_off(name);
-    relays_reset({ preservePower: true });
-    sin_all_off_and_speed();
-    fsm_transition("completed");
-  }
-  else if (type === "walking_floor_counter") {
-    const n = Number(cmd?.val);
-    if (Number.isFinite(n)) {
-      if (n > 0) {
-        if (n % 2 === 0) walking_floor_cmd("forward");
-        else             walking_floor_cmd("reverse");
-      } else {
-        walking_floor_cmd("off");
-        timer_on("fan_pwm");
-      }
-    }
+    fsm_complete_common();
   }
 }
 
@@ -604,13 +711,24 @@ function handle_rpc(msg){
   if(method==="cmd"){
     const {target,type} = params;
 
-    if (target==="fsm") { fsm_cmd({ type, val: params?.val }); }
-    else if (target==="timers" && type==="off") { for (const n of Object.keys(cfg.timers||{})) timer_off(n); }
-    else if (target==="actuators" && type==="off") { relays_reset({ preservePower:true }); sin_all_off_and_speed(); }
-    else if (target==="walking_floor") { walking_floor_cmd(type); }
-    else if (target==="roof") { roof_cmd(type); }
+    if (target==="fsm") {
+      fsm_cmd({ type, val: params?.val });
+    }
+    else if (target==="timers" && type==="off") {
+      day_timer_stop();
+      wf_loop_force_stop();
+    }
+    else if (target==="actuators" && type==="off") {
+      fsm_complete_common();
+    }
+    else if (target==="walking_floor") {
+      wf_loop_force_stop();
+      walking_floor_cmd(type);
+    }
+    else if (target==="roof") {
+      roof_cmd(type);
+    }
     else if (cfg.io?.relay_outputs_1?.channels?.[target] || cfg.io?.relay_outputs_2?.channels?.[target]) {
-      // tekil röle kontrolü
       const onOff = (type === "on");
       relay_set(target, onOff);
       relays_packAndSend();
@@ -624,17 +742,19 @@ function handle_rpc(msg){
       }
     }
     else if (target==="day_counter" && type==="skip") {
-      const sig = cfg.timers?.day_counter?.signal ?? null;
-      timer_on("day_counter", sig);
+      fsm_cmd({ type:"complete", reason:"skip" });
     }
-    else if (cfg.sinamics?.channels?.[target]) { sin_cmd(target,type); } // speed YOK; sadece forward/reverse/off
-    else if (target==="sinamics" && type==="fault_ack") { sin_fault_ack_all(); }
+    else if (cfg.sinamics?.channels?.[target]) {
+      sin_cmd(target,type);
+    }
+    else if (target==="sinamics" && type==="fault_ack") {
+      sin_fault_ack_all();
+    }
 
     rpcResp(id, { response: true });
     return;
   }
 
-  // get.*  (kernel tamamına erişim)
   if (typeof method === "string" && method.startsWith("get.")) {
     const path = method.split(".").slice(1);
     let cur = { config: cfg, runtime: rt, helpers: hp };
@@ -643,9 +763,8 @@ function handle_rpc(msg){
     return;
   }
 
-  // set.*  (kernel tamamına yazma) + HOOK: speed_set_point -> Modbus speed write & NO telemetry
   if (typeof method === "string" && method.startsWith("set.")) {
-    const path = method.split(".").slice(1); // ["config","sinamics","channels","fan","speed_set_point"]
+    const path = method.split(".").slice(1);
     let cur = { config: cfg, runtime: rt, helpers: hp };
     for (let i=0;i<path.length-1;i++){
       const k = path[i];
@@ -654,7 +773,6 @@ function handle_rpc(msg){
     }
     cur[path[path.length-1]] = params?.value;
 
-    // HOOK: speed_set_point mi?
     if (path.length===5 &&
         path[0]==="config" && path[1]==="sinamics" && path[2]==="channels" &&
         path[4]==="speed_set_point") {
@@ -664,7 +782,6 @@ function handle_rpc(msg){
       if (ch && Number.isFinite(sp)) {
         const { speedAddr } = sin_address();
         sin_write(ch.unitid, speedAddr, sin_speedToValue(sp));
-        // Telemetry YOK; runtime dokunulmaz
       }
     }
 
@@ -688,9 +805,12 @@ switch (msg.topic) {
   case "analog_inputs":    handle_analog_inputs(msg);  break;
   case "energy_meter":     handle_energy_meter(msg);   break;
   case "sinamics":         sin_evt_from_status(msg);   break;
-  case "timer":            timers_tick();              break;
   case "power_on":         handle_power_on();          break;
   case "power_on_delay":   sin_all_off_and_speed();    break;
+
+  case "day_timer":        day_timer_tick();           break;
+  case "wf_loop_timer":    wf_loop_tick();             break;
+
   default:
     if (typeof msg.topic === "string" && msg.topic.indexOf("v1/devices/me/rpc/request/") === 0) {
       handle_rpc(msg);
@@ -698,8 +818,5 @@ switch (msg.topic) {
     break;
 }
 
-// persist & emit
 context.set("kernel", K);
-
-// SINGLE OUTPUT: multiple messages as an array on port#1
 return [ out.length ? out : null ];

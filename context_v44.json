@@ -17,13 +17,13 @@
           "channels": {
             "temperature": {
               "map": 5,
-              "change": 1,
+              "change": 0.5,
               "factor": 0.01,
               "scale": { "in_min": 4, "in_max": 20, "out_min": 0, "out_max": 100 }
             },
             "oxygen": {
               "map": 7,
-              "change": 0.2,
+              "change": 0.1,
               "factor": 0.01,
               "scale": { "in_min": 4.81, "in_max": 20, "out_min": 1.63, "out_max": 21.53 }
             }
@@ -35,7 +35,6 @@
           "channels": {
             "roof_forward_contactor": { "map": 0 },
             "roof_reverse_contactor": { "map": 1 },
-            "light": { "map": 6 },
             "water_valve": { "map": 7 }
           }
         },
@@ -64,8 +63,8 @@
       "sinamics": {
         "config_node": "202_9600_tcp_rtu_sinamics",
         "channels": {
-          "fan": { "unitid": 12, "speed_set_point": 100 },
-          "discharger": { "unitid": 14, "speed_set_point": 100 }
+          "fan": { "unitid": 12, "speed_set_point": 50 },
+          "discharger": { "unitid": 14, "speed_set_point": 50 }
         },
         "command_words": {
           "forward": 1151,
@@ -81,25 +80,16 @@
           "direction": { "map": 14 }
         },
         "speed_max": 16384,
-        "fault_ack_retry": 3
+        "fault_ack_retry": 3,
+        "fault_ack_enable": true
       },
       "timers": {
-        "fan_pwm": { "form": "pwm", "t_duty": 10, "t_cycle": 180, "unit": "min" },
-        "light_pulse": { "form": "delay", "duration": 2, "unit": "s" },
-        "water_valve_pwm": { "form": "pwm", "t_duty": 15, "t_cycle": 1440, "unit": "min" },
-        "day_counter": {
-          "form": "counter",
-          "direction": "down",
-          "interval": 1,
+        "day_timer": {
           "base": 21,
-          "signal": 3,
           "unit": "d"
         },
-        "walking_floor_counter": {
-          "form": "counter",
-          "direction": "down",
-          "interval": 20,
-          "base": 10,
+        "walking_floor_loop_timer": {
+          "interval": 10,
           "unit": "s"
         }
       }
@@ -122,7 +112,6 @@
           "channels": {
             "roof_forward_contactor": { "val": "off" },
             "roof_reverse_contactor": { "val": "off" },
-            "light": { "val": "off" },
             "water_valve": { "val": "off" }
           }
         },
@@ -146,11 +135,7 @@
         }
       },
       "timers": {
-        "fan_pwm": { "state": "off", "phase_until": null },
-        "light_pulse": { "state": "off", "phase_until": null },
-        "water_valve_pwm": { "state": "off", "phase_until": null },
-        "day_counter": { "state": "off", "count": 0, "next_time": null },
-        "walking_floor_counter": { "state": "off", "count": 0, "next_time": null }
+        "day": 0
       },
       "fsm": { "val": "completed" }
     },

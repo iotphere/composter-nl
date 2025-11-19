@@ -90,6 +90,7 @@
         },
         "walking_floor_loop_timer": {
           "interval": 10,
+          "min_tours": 7,
           "unit": "s"
         }
       }
@@ -135,8 +136,12 @@
         }
       },
       "timers": {
-        "day": 0
+        "day_timer": {
+          "val": 0
+        }
       },
+      "walking_floor_auto": { "val": "off" },
+      "walking_floor_position": { "val": 0 },
       "fsm": { "val": "completed" }
     },
     "helpers": {

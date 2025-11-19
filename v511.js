@@ -1,15 +1,43 @@
 /************************************************************
- * PLC (Single Function Node) — V44
+ * PLC (Single Function Node) — V51
  * - Day timer start echo sorunu çözülü (V42’den devralınmış).
- * - Walking floor (tick + pozisyon takibi, center'da bitirme) başarılı (V42/V43’ten devralınmış).
+ * - Walking floor:
+ *   * 100 ms tick tabanlı encoder (walking_floor_timer).
+ *   * position: center=0, forward++ / reverse--, off=değişmez.
+ *   * Encoder reset ONLY: RPC {target:"walking_floor_encoder", type:"reset"}.
+ *   * Auto cycling: entry → cycling → exit-center.
+ *   * Entry kuralları (position’a göre ilk yön):
+ *       0..+49      → forward
+ *       ≥ +50       → reverse
+ *       -1..-49     → reverse
+ *       ≤ -50       → forward
+ *     Dışarıda bile olsa önce [-max,+max] bandına girip oradan cycling’e bağlanır.
+ *   * Auto exit: min_tours tamamlanmadan exit yok, sonra en kısa
+ *     yoldan center’a gelip durur.
+ *   * Auto + fan tam paralel:
+ *       auto mode != "off" → fan ON
+ *       auto mode == "off" → fan OFF
+ *   * Manual RPC:
+ *       - target:"walking_floor", type:"forward"/"reverse"/"off"
+ *         * Auto ON iken forward/reverse IGNORE
+ *         * type:"off" her zaman kabul, auto force stop + acil durdurma
+ *       - target:"walking_floor_auto", type:"on"/"off"
+ *         * FSM/oxygen durumundan bağımsız tetik
+ *       - target:"walking_floor_encoder", type:"reset"
+ *         * Sadece encoder pozisyonunu 0 yapar, auto’yu etkilemez
  * - ANALOG INPUTS:
  *   * change "static" olarak son stabil değere göre çalışıyor.
- *   * Yeterli değişim için 2 ardışık örnekte deadband dışı olma şartı var.
+ *   * Yeterli değişim için 2 ardışık örnekte deadband dışı olma şartı.
  *   * pro detector’lar sadece bu filtreyi geçen stabil değeri kullanıyor.
  * - SINAMICS AUTO-RECOVER:
  *   * Ortak retry limiti: config.sinamics.fault_ack_retry (default 3).
  *   * Ortak enable flag: config.sinamics.fault_ack_enable (default true).
- *   * fault_ack_enable === false iken otomatik recover çalışmaz, sadece status telemetry güncellenir.
+ *   * fault_ack_enable === false iken otomatik recover çalışmaz,
+ *     sadece status telemetry güncellenir.
+ * - RUNTIME:
+ *   * timers.day_timer.val
+ *   * walking_floor_auto.val ("on"/"off")
+ *   * walking_floor_position.val (encoder pozisyonu)
  ************************************************************/
 
 // ---------- micro utils ----------
@@ -471,7 +499,7 @@ function handle_energy_meter(msg){
 }
 
 // ==========================================================
-// DAY TIMER (HARİCİ TRIGGER — FIXED)
+// DAY TIMER (HARİCİ TRIGGER — FIXED, runtime.timers.day_timer.val)
 // ==========================================================
 // hp.day_timer_just_started = true → day_timer_start içinde set edilir
 
@@ -479,10 +507,12 @@ function day_timer_start() {
   const tcfg = cfg.timers?.day_timer || {};
   const base = Number.isFinite(tcfg.base) ? tcfg.base : 0;
 
-  const rtTimers = ensure(rt, ["timers"]);
-  rtTimers.day = base;
+  const rtDay = ensure(rt, ["timers","day_timer"]);
+  rtDay.val = base;
 
-  tel({ day: base });
+  // ESKİ: tel({ day: base });
+  // YENİ: runtime ile paralel: day_timer
+  tel({ day_timer: rtDay.val });
 
   hp.day_timer_just_started = true;
 
@@ -490,9 +520,12 @@ function day_timer_start() {
 }
 
 function day_timer_stop() {
-  const rtTimers = ensure(rt, ["timers"]);
-  rtTimers.day = 0;
-  tel({ day: 0 });
+  const rtDay = ensure(rt, ["timers","day_timer"]);
+  rtDay.val = 0;
+
+  // ESKİ: tel({ day: 0 });
+  // YENİ:
+  tel({ day_timer: rtDay.val });
 
   hp.day_timer_just_started = false;
 
@@ -508,13 +541,16 @@ function day_timer_tick() {
     return;
   }
 
-  const rtTimers = ensure(rt, ["timers"]);
-  let day = Number(rtTimers.day) || 0;
+  const rtDay = ensure(rt, ["timers","day_timer"]);
+  let day = Number(rtDay.val) || 0;
   if (day <= 0) return;
 
   day -= 1;
-  rtTimers.day = day;
-  tel({ day });
+  rtDay.val = day;
+
+  // ESKİ: tel({ day });
+  // YENİ:
+  tel({ day_timer: rtDay.val });
 
   if (day <= 0) {
     fsm_cmd({ type: "complete", reason: "day0" });
@@ -522,107 +558,249 @@ function day_timer_tick() {
 }
 
 // ==========================================================
-// WALKING FLOOR LOOP (HARİCİ TRIGGER) — V41/V43 mantığı
+// WALKING FLOOR ENCODER + AUTO CYCLING (V51)
 // ==========================================================
-// Tick + pozisyon takipli model:
-//   phase 0: center
-//   phase 1: forward_end
-//   phase 2: center
-//   phase 3: reverse_end
-// Tick dizisi: 0 → 1 → 2 → 3 → 0 → ...
-// Exit: exit_pending true iken phase ∈ {0,2} olduğunda center'da OFF + trigger reset
+//
+// - walking_floor_timer: her 100 ms tick (inject node).
+// - Encoder:
+//     direction=forward → pos++
+//     direction=reverse → pos--
+//     direction=off     → değişmez
+//   direction bilgisi: rt.io.relay_groups.walking_floor.val
+//   center'da pos=0.
+//   Pozisyon helpers.walking_floor.position içinde tutulur,
+//   runtime.walking_floor_position.val üzerinden telemetry edilir.
+// - Auto state machine (helpers.walking_floor.auto):
+//     mode: "off" | "entry" | "cycling" | "exit_center"
+//     exit_requested: bool
+//     tours: tam tur sayısı (uçtan uca)
+//     last_edge: +1 (forward_end), -1 (reverse_end), null
+//     dir: son komut yönü ("forward"/"reverse"/"off")
+// - RUNTIME:
+//     rt.walking_floor_auto.val = "off" | "on"  (auto aktif/pasif)
+//     rt.walking_floor_position.val = number (encoder pozisyonu)
+// - Entry ilk yön kuralları (start anındaki position’a göre):
+//     0 .. +max-1      → forward
+//     ≥ +max           → reverse
+//     -1 .. -(max-1)   → reverse
+//     ≤ -max           → forward
+// - Exit:
+//     exit_requested = true
+//     tours < min_tours → cycling'e devam
+//     tours ≥ min_tours → mode="exit_center"
+//     exit_center:
+//        pos>0 → reverse
+//        pos<0 → forward
+//        pos=0 → OFF + fan OFF + auto kapalı + (gerekirse) shutdown finalize
 
-function wf_state() {
+function wf_helper() {
   return ensure(hp, ["walking_floor"]);
 }
-
-function wf_is_active() {
-  const h = wf_state();
-  return !!h.active;
+function wf_auto_state() {
+  const h = wf_helper();
+  if (!h.auto) {
+    h.auto = { mode:"off", exit_requested:false, tours:0, last_edge:null, dir:null };
+  }
+  return h.auto;
 }
-
-function wf_loop_start() {
-  const h = wf_state();
-  if (h.active) return;
-
-  h.active = true;
-  h.exit_pending = false;
-
-  // İlk hareket forward, ilk tick echo'su ignore edilecek
-  h.phase = 0;
-  h.just_started = true;
-
-  walking_floor_cmd("forward");
-  sin_cmd("fan", "forward");
-
+function wf_get_position() {
+  const h = wf_helper();
+  if (typeof h.position !== "number") {
+    const existing = rt.walking_floor_position?.val;
+    h.position = (typeof existing === "number") ? existing : 0;
+  }
+  return h.position;
+}
+function wf_set_position(pos) {
+  const h = wf_helper();
+  h.position = pos;
+  setIfChanged(rt, ["walking_floor_position"], "val", pos, "walking_floor_position");
+}
+function wf_encoder_reset() {
+  wf_set_position(0);
+}
+function wf_limits() {
   const tcfg = cfg.timers?.walking_floor_loop_timer || {};
   const intervalSec = Number(tcfg.interval) || 10;
-  const delayMs = Math.max(1, Math.round((intervalSec * 1000) / 2));
-
-  out.push({
-    topic: "wf_loop_timer",
-    delay: delayMs,
-    payload: "wf_loop_timer"
-  });
+  const maxPos = Math.max(1, Math.round((intervalSec / 2) / 0.1)); // default: 10s → 50
+  const minTours = Math.max(0, Number.isFinite(tcfg.min_tours) ? tcfg.min_tours : 0);
+  return { maxPos, minTours };
 }
-
-function wf_loop_request_stop() {
-  const h = wf_state();
-  if (!h.active) return;
-  h.exit_pending = true;
+function wf_update_auto_runtime() {
+  const a = wf_auto_state();
+  const state = (a.mode === "off") ? "off" : "on";
+  setIfChanged(rt, ["walking_floor_auto"], "val", state, "walking_floor_auto");
 }
+function wf_is_active() {
+  const a = wf_auto_state();
+  return a.mode !== "off";
+}
+function wf_auto_start(source) {
+  const a = wf_auto_state();
+  if (a.mode !== "off") {
+    // Zaten aktif → sadece exit isteğini iptal et, state "on" kalır
+    a.exit_requested = false;
+    wf_update_auto_runtime();
+    return;
+  }
 
-function wf_loop_force_stop() {
-  const h = wf_state();
-  if (!h.active) return;
+  const pos = wf_get_position();
+  const { maxPos } = wf_limits();
 
+  // Entry başlangıç yönü (senin tablon):
+  // 0..+49 → forward
+  // ≥+50   → reverse
+  // -1..-49→ reverse
+  // ≤-50   → forward
+  let dir;
+  if (pos >= maxPos) {
+    dir = "reverse";
+  } else if (pos <= -maxPos) {
+    dir = "forward";
+  } else if (pos >= 0) {
+    dir = "forward";
+  } else {
+    dir = "reverse";
+  }
+
+  a.mode = "entry";
+  a.exit_requested = false;
+  a.tours = 0;
+  a.last_edge = null;
+  a.dir = dir;
+
+  wf_update_auto_runtime();
+
+  // İlk hareket ve fan paralel
+  if (dir === "forward" || dir === "reverse") {
+    walking_floor_cmd(dir);
+  } else {
+    walking_floor_cmd("off");
+  }
+  // Fan auto süresince ON (yön önemli değil)
+  sin_cmd("fan", "forward");
+}
+function wf_auto_request_exit() {
+  const a = wf_auto_state();
+  if (a.mode === "off") return;
+  a.exit_requested = true;
+  wf_update_auto_runtime();
+}
+function wf_auto_force_stop() {
+  const a = wf_auto_state();
+  a.mode = "off";
+  a.exit_requested = false;
+  a.tours = 0;
+  a.last_edge = null;
+  a.dir = null;
+
+  wf_update_auto_runtime();
+
+  // Acil durdurma: walking floor ve fan tamamen kapalı
   walking_floor_cmd("off");
   sin_cmd("fan", "off");
-  h.active = false;
-  h.exit_pending = false;
-  h.phase = 0;
-  h.just_started = false;
-
-  out.push({ topic: "wf_loop_timer", reset: true, payload: "wf_loop_timer" });
+}
+function wf_after_auto_stopped() {
+  // Yalnızca graceful exit-center sonrasında çağrılır.
+  if (hp.shutdown_pending) {
+    relays_reset({ preservePower: true });
+    sin_all_off_and_speed();
+    hp.shutdown_pending = false;
+  }
 }
 
-function wf_loop_tick() {
-  const h = wf_state();
-  if (!h.active) return;
+// 100 ms tick handler
+function walking_floor_timer_tick() {
+  // 1) ENCODER: her tick, runtime yönüne göre pozisyonu güncelle
+  const dirLabel = rt.io?.relay_groups?.walking_floor?.val || "off";
+  let pos = wf_get_position();
+  if (dirLabel === "forward") pos += 1;
+  else if (dirLabel === "reverse") pos -= 1;
+  wf_set_position(pos);
 
-  // İlk tick (trigger echo) → ignore
-  if (h.just_started) {
-    h.just_started = false;
-    return;
+  // 2) AUTO CYCLING STATE MACHINE
+  const a = wf_auto_state();
+  const { maxPos, minTours } = wf_limits();
+
+  if (a.mode === "off") {
+    wf_update_auto_runtime();
+    return; // auto devre dışı → encoder yalnız çalışıyor
   }
 
-  if (typeof h.phase !== "number") h.phase = 0;
-  h.phase = (h.phase + 1) & 3; // 0..3
+  wf_update_auto_runtime(); // mode != off → runtime.walking_floor_auto = "on"
 
-  // Exit isteği varsa ve center'daysak (0 veya 2)
-  if (h.exit_pending && (h.phase === 0 || h.phase === 2)) {
-    walking_floor_cmd("off");
-    sin_cmd("fan", "off");
-    h.active = false;
-    h.exit_pending = false;
+  let desiredDir = a.dir || "off";
 
-    out.push({ topic: "wf_loop_timer", reset: true, payload: "wf_loop_timer" });
-
-    if (hp.shutdown_pending) {
-      relays_reset({ preservePower: true });
-      sin_all_off_and_speed();
-      hp.shutdown_pending = false;
+  // ENTRY: her durumda önce -max..+max bandına sokmaktan sorumlu
+  if (a.mode === "entry") {
+    if (pos > maxPos) {
+      desiredDir = "reverse";
+    } else if (pos < -maxPos) {
+      desiredDir = "forward";
+    } else {
+      // Artık bandın içindeyiz → cycling'e bağlan
+      a.mode = "cycling";
+      if (pos >= maxPos)      a.last_edge = +1;
+      else if (pos <= -maxPos) a.last_edge = -1;
+      desiredDir = a.dir || desiredDir || "forward";
     }
-    return;
+  }
+  else if (a.mode === "cycling") {
+    // Exit isteği ve yeterli tur sayısı varsa → exit_center
+    if (a.exit_requested && a.tours >= minTours) {
+      a.mode = "exit_center";
+    } else {
+      const prevEdge = a.last_edge;
+      if (pos >= maxPos) {
+        if (prevEdge === -1) {
+          a.tours += 1; // -max → +max tam tur
+        }
+        a.last_edge = +1;
+        desiredDir = "reverse";
+      } else if (pos <= -maxPos) {
+        if (prevEdge === +1) {
+          a.tours += 1; // +max → -max tam tur
+        }
+        a.last_edge = -1;
+        desiredDir = "forward";
+      } else {
+        // Uçta değilsek mevcut yönü koru
+        desiredDir = a.dir || desiredDir || "forward";
+      }
+    }
   }
 
-  // Normal döngü yön seçimi:
-  // phase 0 veya 3 → forward
-  // phase 1 veya 2 → reverse
-  if (h.phase === 0 || h.phase === 3) {
-    walking_floor_cmd("forward");
-  } else {
-    walking_floor_cmd("reverse");
+  if (a.mode === "exit_center") {
+    if (pos > 0) {
+      desiredDir = "reverse";
+    } else if (pos < 0) {
+      desiredDir = "forward";
+    } else {
+      // center'a geldik → tamamen durdur
+      desiredDir = "off";
+      a.mode = "off";
+      a.exit_requested = false;
+      a.tours = 0;
+      a.last_edge = null;
+      a.dir = null;
+
+      walking_floor_cmd("off");
+      sin_cmd("fan", "off");
+
+      wf_update_auto_runtime();
+      wf_after_auto_stopped();
+      return;
+    }
+  }
+
+  // Komut uygula
+  if (desiredDir !== a.dir) {
+    a.dir = desiredDir;
+    if (desiredDir === "off") {
+      walking_floor_cmd("off");
+    } else {
+      walking_floor_cmd(desiredDir);
+    }
   }
 }
 
@@ -643,13 +821,14 @@ function fsm_event_from_digital(key, val) {
   if (st !== "processing") return;
 
   if (key === lowKey && val === "off") {
-    sin_cmd("fan", "forward");
-    wf_loop_start();
+    // Oksijen LOW → auto cycling başlat (fan paralel, encoder reset YOK)
+    wf_auto_start("oxygen");
   }
 
   if (key === highKey && val === "off") {
-    sin_cmd("fan", "off");
-    wf_loop_request_stop();
+    // Oksijen HIGH → auto cycling için exit isteği
+    wf_auto_request_exit();
+    // Fan, exit-center tamamlanana kadar ON kalır, exit_center sonunda OFF yapılır.
   }
 }
 
@@ -661,7 +840,7 @@ function fsm_complete_common() {
 
   if (wf_is_active()) {
     hp.shutdown_pending = true;
-    wf_loop_request_stop();
+    wf_auto_request_exit();
   } else {
     relays_reset({ preservePower: true });
     sin_all_off_and_speed();
@@ -676,21 +855,24 @@ function fsm_cmd(cmd) {
   if (type === "process") {
 
     day_timer_stop();
-    wf_loop_force_stop();
+    // Yeni process: auto varsa temiz başlamak için durdur
+    wf_auto_force_stop();
     hp.shutdown_pending = false;
-    hp.walking_floor = {};
 
     fsm_transition("processing");
 
+    // Artık encoder reset YOK, sadece kullanıcı RPC reset ile yapabilir
     day_timer_start();
 
     const digHigh = rt.io?.digital_inputs?.channels?.oxygen_detector_dig_high?.val || "on";
 
     if (digHigh === "on") {
-      sin_cmd("fan", "forward");
-      wf_loop_start();
+      // Oksijen uygunsa hemen auto başlat (entry’den)
+      wf_auto_start("fsm");
     } else {
+      // Oksijen yüksek → fan kapalı, walking floor off
       sin_cmd("fan", "off");
+      walking_floor_cmd("off");
     }
   }
   else if (type === "complete") {
@@ -714,16 +896,34 @@ function handle_rpc(msg){
     if (target==="fsm") {
       fsm_cmd({ type, val: params?.val });
     }
-    else if (target==="timers" && type==="off") {
-      day_timer_stop();
-      wf_loop_force_stop();
-    }
-    else if (target==="actuators" && type==="off") {
-      fsm_complete_common();
-    }
     else if (target==="walking_floor") {
-      wf_loop_force_stop();
-      walking_floor_cmd(type);
+      // Manuel komutlar
+      const autoActive = wf_is_active();
+
+      if (type === "off") {
+        // Tek gerçek acil durdurma: auto varsa da yoksa da her zaman çalışır
+        wf_auto_force_stop();
+      }
+      else if (type === "forward" || type === "reverse") {
+        // Auto ON iken manuel yön komutları yok sayılır
+        if (!autoActive) {
+          walking_floor_cmd(type);
+        }
+      }
+      // Diğer type değerleri (örn. bilinmeyen) ignore
+    }
+    else if (target==="walking_floor_auto") {
+      // Auto cycling’i RPC ile kontrol et (FSM/oxygen’den bağımsız tetik)
+      if (type === "on") {
+        wf_auto_start("rpc");
+      } else if (type === "off") {
+        wf_auto_request_exit();
+        // Fan, exit-center tamamlanana kadar ON kalır
+      }
+    }
+    else if (target==="walking_floor_encoder" && type==="reset") {
+      // Yeni merkez: sadece encoder pozisyonunu 0 yap
+      wf_encoder_reset();
     }
     else if (target==="roof") {
       roof_cmd(type);
@@ -740,9 +940,6 @@ function handle_rpc(msg){
         relays_reset({ setPower:true });
         out.push({ topic:"power_on_delay", payload:{ type:"cmd.power_on_delay" } });
       }
-    }
-    else if (target==="day_counter" && type==="skip") {
-      fsm_cmd({ type:"complete", reason:"skip" });
     }
     else if (cfg.sinamics?.channels?.[target]) {
       sin_cmd(target,type);
@@ -801,15 +998,17 @@ function handle_power_on(){
 // MAIN DISPATCH
 // ==========================================================
 switch (msg.topic) {
-  case "digital_inputs":   handle_digital_inputs(msg); break;
-  case "analog_inputs":    handle_analog_inputs(msg);  break;
-  case "energy_meter":     handle_energy_meter(msg);   break;
-  case "sinamics":         sin_evt_from_status(msg);   break;
-  case "power_on":         handle_power_on();          break;
-  case "power_on_delay":   sin_all_off_and_speed();    break;
+  case "digital_inputs":        handle_digital_inputs(msg);   break;
+  case "analog_inputs":         handle_analog_inputs(msg);    break;
+  case "energy_meter":          handle_energy_meter(msg);     break;
+  case "sinamics":              sin_evt_from_status(msg);     break;
+  case "power_on":              handle_power_on();            break;
+  case "power_on_delay":        sin_all_off_and_speed();      break;
 
-  case "day_timer":        day_timer_tick();           break;
-  case "wf_loop_timer":    wf_loop_tick();             break;
+  case "day_timer":             day_timer_tick();             break;
+
+  // 100 ms encoder + auto tick
+  case "walking_floor_timer":   walking_floor_timer_tick();   break;
 
   default:
     if (typeof msg.topic === "string" && msg.topic.indexOf("v1/devices/me/rpc/request/") === 0) {

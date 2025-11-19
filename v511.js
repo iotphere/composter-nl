@@ -1,5 +1,5 @@
 /************************************************************
- * PLC (Single Function Node) — V51
+ * PLC (Single Function Node) — V511
  * - Day timer start echo sorunu çözülü (V42’den devralınmış).
  * - Walking floor:
  *   * 100 ms tick tabanlı encoder (walking_floor_timer).
